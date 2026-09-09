@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Move A Mind — משוב פיילוט</title>
+<style>
+body{font-family:Arial,Helvetica,sans-serif;background:#f6f7fb;margin:0;color:#1f2430}.wrap{max-width:760px;margin:0 auto;padding:24px}.card{background:#fff;border-radius:18px;padding:24px;box-shadow:0 8px 30px rgba(0,0,0,.06)}h1{margin:0 0 8px;font-size:28px}.sub{color:#667085;margin-bottom:24px}.q{margin:22px 0}.q label{display:block;font-weight:700;margin-bottom:8px}.scale{display:flex;gap:8px;flex-wrap:wrap}.scale label{font-weight:400;border:1px solid #d0d5dd;border-radius:10px;padding:8px 11px;cursor:pointer}.scale input{margin-left:4px}select,input[type=text],textarea{width:100%;box-sizing:border-box;border:1px solid #d0d5dd;border-radius:10px;padding:11px;font-size:16px;background:#fff}textarea{min-height:95px;resize:vertical}.btn{width:100%;border:0;border-radius:12px;padding:14px;font-size:17px;font-weight:700;background:#111827;color:#fff;cursor:pointer}.note{font-size:13px;color:#667085}.done{display:none;text-align:center;padding:28px 8px}.err{color:#b42318;margin-top:10px;display:none}@media(max-width:520px){.wrap{padding:14px}.card{padding:18px}.scale label{padding:7px 9px}}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="card" id="formCard">
+<h1>משוב פיילוט — Move A Mind</h1>
+<div class="sub">המשוב קצר ואנונימי כברירת מחדל. המטרה היא לשפר את רמת האתגר, הטבעיות והערך של הסימולציה.</div>
+<form id="f">
+<div class="q"><label>שם / כינוי (לא חובה)</label><input type="text" name="name" placeholder="אפשר להשאיר ריק"></div>
+<div class="q"><label>באיזה תחום התנסית?</label><select name="track" required><option value="">בחר/י</option><option>מכירות / שירות</option><option>ניהול / עבודה</option><option>הורות</option><option>הוראה / חינוך</option><option>חיי יום-יום</option><option>יותר מתחום אחד</option></select></div>
+<div class="q"><label>עד כמה התרחיש הרגיש מציאותי?</label><div class="scale" data-name="realism"></div></div>
+<div class="q"><label>עד כמה השיחה הייתה מאתגרת מחשבתית?</label><div class="scale" data-name="difficulty"></div></div>
+<div class="q"><label>עד כמה תגובות הדמות הרגישו טבעיות?</label><div class="scale" data-name="naturalness"></div></div>
+<div class="q"><label>האם אורך השיחה היה נכון?</label><select name="length_fit" required><option value="">בחר/י</option><option>קצר מדי</option><option>בדיוק נכון</option><option>ארוך מדי</option></select></div>
+<div class="q"><label>עד כמה הרגשת שהמערכת הגיבה באמת למה שאמרת?</label><div class="scale" data-name="responsiveness"></div></div>
+<div class="q"><label>האם נקודת הסיום של השיחה הרגישה טבעית?</label><select name="ending" required><option value="">בחר/י</option><option>כן</option><option>בערך</option><option>לא</option></select></div>
+<div class="q"><label>האם היית רוצה לנסות תרחיש נוסף?</label><select name="try_again" required><option value="">בחר/י</option><option>כן</option><option>אולי</option><option>לא</option></select></div>
+<div class="q"><label>מה היה הדבר הכי טוב במערכת?</label><textarea name="best" required></textarea></div>
+<div class="q"><label>מה היה הדבר שהכי הפריע או היה חסר?</label><textarea name="change" required></textarea></div>
+<div class="q"><label>איזה סוג תרחיש היית רוצה לראות במערכת?</label><textarea name="scenario_idea"></textarea></div>
+<div class="q"><label>ציון כללי למערכת כרגע</label><div class="scale" data-name="overall"></div></div>
+<div class="note">סולם 1–10: 1 = נמוך מאוד, 10 = גבוה מאוד.</div>
+<br><button class="btn" type="submit">שליחת משוב</button><div class="err" id="err">לא הצלחנו לשלוח. נסה/י שוב.</div>
+</form>
+</div><div class="card done" id="done"><h1>תודה רבה</h1><p>המשוב נשמר בהצלחה ועוזר לנו לשפר את הפיילוט.</p></div></div>
+<script>
+for(const el of document.querySelectorAll('.scale')){const n=el.dataset.name;for(let i=1;i<=10;i++){const l=document.createElement('label');l.innerHTML=`<input required type="radio" name="${n}" value="${i}">${i}`;el.appendChild(l)}}
+document.getElementById('f').addEventListener('submit',async(e)=>{e.preventDefault();const fd=new FormData(e.target);const body=Object.fromEntries(fd.entries());try{const r=await fetch('/api/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw 0;document.getElementById('formCard').style.display='none';document.getElementById('done').style.display='block';}catch{document.getElementById('err').style.display='block'}})
+</script>
+</body></html>
