@@ -1,6 +1,7 @@
-import os
+import os, json, datetime
 import server_v5 as app
 from http.server import ThreadingHTTPServer
+from urllib.parse import urlparse
 
 app.GLOBAL = '''אתה מפעיל סימולציית שיחה ריאליסטית ומאתגרת. אתה הדמות בלבד.
 המטרה היא לבדוק האם המשתמש מסוגל להבין אינטרסים, לזהות סתירות, לשאול שאלות טובות, לנסח הצעות מדויקות ולהתקדם להחלטה — בלי למשוך את השיחה לנצח.
@@ -67,7 +68,57 @@ def scenario_system(sc, turn):
 
 app.scenario_system = scenario_system
 
+FEEDBACK_FILE = app.DATA / 'feedback.jsonl'
+
+class H(app.H):
+    def do_GET(self):
+        p = urlparse(self.path).path
+        if p == '/feedback' or p == '/feedback/':
+            f = app.WEB / 'feedback.html'
+            if not f.exists():
+                return self._json({'error':'טופס המשוב לא נמצא'},404)
+            b = f.read_bytes()
+            self.send_response(200)
+            self.send_header('Content-Type','text/html; charset=utf-8')
+            self.send_header('Content-Length',str(len(b)))
+            self.end_headers(); self.wfile.write(b); return
+        return super().do_GET()
+
+    def do_POST(self):
+        p = urlparse(self.path).path
+        if p == '/api/feedback':
+            try:
+                body = self._body()
+            except Exception:
+                return self._json({'error':'בקשה לא תקינה'},400)
+            required = ['track','realism','difficulty','naturalness','length_fit','responsiveness','ending','try_again','best','change','overall']
+            if any(not str(body.get(k,'')).strip() for k in required):
+                return self._json({'error':'יש שדות חובה שלא מולאו'},400)
+            record = {
+                'submitted_at': datetime.datetime.utcnow().isoformat()+'Z',
+                'name': str(body.get('name','')).strip(),
+                'track': str(body.get('track','')).strip(),
+                'realism': int(body.get('realism')),
+                'difficulty': int(body.get('difficulty')),
+                'naturalness': int(body.get('naturalness')),
+                'length_fit': str(body.get('length_fit','')).strip(),
+                'responsiveness': int(body.get('responsiveness')),
+                'ending': str(body.get('ending','')).strip(),
+                'try_again': str(body.get('try_again','')).strip(),
+                'best': str(body.get('best','')).strip(),
+                'change': str(body.get('change','')).strip(),
+                'scenario_idea': str(body.get('scenario_idea','')).strip(),
+                'overall': int(body.get('overall'))
+            }
+            for k in ['realism','difficulty','naturalness','responsiveness','overall']:
+                if record[k] < 1 or record[k] > 10:
+                    return self._json({'error':'ציון לא תקין'},400)
+            with FEEDBACK_FILE.open('a',encoding='utf-8') as fh:
+                fh.write(json.dumps(record,ensure_ascii=False)+'\n')
+            return self._json({'ok':True})
+        return super().do_POST()
+
 if __name__ == '__main__':
     os.chdir(app.ROOT)
-    print('Move A Mind v1.1')
-    ThreadingHTTPServer(('0.0.0.0', app.PORT), app.H).serve_forever()
+    print('Move A Mind v1.1 + feedback')
+    ThreadingHTTPServer(('0.0.0.0', app.PORT), H).serve_forever()
