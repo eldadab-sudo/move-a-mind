@@ -8,6 +8,7 @@ index_path = app.WEB / 'index.html'
 html = index_path.read_text(encoding='utf-8')
 html = html.replace('התחל סימולציה','התחל')
 html = html.replace('בדוק אותי','התחל')
+html = html.replace('הצג תרחיש והתחל','התחל')
 index_path.write_text(html, encoding='utf-8')
 
 if __name__ == '__main__':
