@@ -31,7 +31,6 @@ def explicit_role_scenario(track, sub):
     user_role, other_role = ROLE_LABELS[track]
     char = sc.get('character', '')
     old_brief = sc.get('brief', '')
-    # Remove the old first role line if present, then prepend a crystal-clear role contract.
     if old_brief.startswith('התפקיד שלך:'):
         parts = old_brief.split('\n\n', 1)
         old_brief = parts[1] if len(parts) > 1 else old_brief
@@ -39,7 +38,7 @@ def explicit_role_scenario(track, sub):
         f"את/ה בתפקיד: {user_role}.\n"
         f"מולך: {char} — {other_role}.\n"
         f"מי מתחיל/ה: {char} ({other_role}) פותח/ת את השיחה ראשון/ה.\n"
-        f"מה את/ה עושה: את/ה מקשיב/ה לפתיחה ואז עונה מתוך התפקיד שלך כ{user_role}.\n\n"
+        f"מה את/ה עושה: את/ה מקשיב/ה לפתיחה ואז עונה מתוך התפקיד שלך — {user_role}.\n\n"
         f"{old_brief}"
     )
     sc['opening'] = OPENINGS[track]
