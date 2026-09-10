@@ -3,4 +3,4 @@ WORKDIR /app
 COPY . /app
 ENV PYTHONUNBUFFERED=1
 EXPOSE 5000
-CMD ["python", "server_v26.py"]
+CMD ["python", "server_v27.py"]
