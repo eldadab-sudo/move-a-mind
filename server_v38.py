@@ -63,5 +63,5 @@ class H(v37.v36.H):
 
 if __name__ == '__main__':
     os.chdir(app.ROOT)
-    print('Move A Mind v4.8 video delivery fix')
+    print('Move A Mind v4.8 video delivery fix - redeploy trigger')
     ThreadingHTTPServer(('0.0.0.0', app.PORT), H).serve_forever()
