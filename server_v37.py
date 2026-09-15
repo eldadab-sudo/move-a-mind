@@ -17,4 +17,5 @@ INDEX.write_text(html, encoding='utf-8')
 
 if __name__ == '__main__':
     os.chdir(app.ROOT)
-    print('Move A Mind v
+    print('Move A Mind v4.6 negotiation-principle landing copy')
+    ThreadingHTTPServer(('0.0.0.0', app.PORT), v36.H).serve_forever()
