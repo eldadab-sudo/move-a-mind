@@ -10,6 +10,7 @@ from http.server import ThreadingHTTPServer
 from urllib.parse import urlparse
 
 import server_v39 as v39
+import server_v21 as v21
 
 app = v39.app
 
@@ -20,15 +21,15 @@ PLANS = {
 }
 
 
-def stripe_request(path, fields):
+def stripe_request(path, fields=None, method='POST'):
     key = os.getenv('STRIPE_SECRET_KEY', '').strip()
     if not key:
         raise RuntimeError('Stripe is not configured')
-    data = urllib.parse.urlencode(fields).encode('utf-8')
+    data = None if fields is None else urllib.parse.urlencode(fields).encode('utf-8')
     req = urllib.request.Request(
         'https://api.stripe.com' + path,
         data=data,
-        method='POST',
+        method=method,
         headers={
             'Authorization': 'Bearer ' + key,
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -62,9 +63,35 @@ def verify_webhook(raw, signature):
     return any(hmac.compare_digest(expected, sig) for sig in parts.get('v1', []))
 
 
+def grant_entitlement(obj):
+    meta = obj.get('metadata') or {}
+    sid = (obj.get('client_reference_id') or meta.get('session_id') or '').strip()
+    plan = (meta.get('plan') or '').strip()
+    if not sid or sid not in app.STORE or plan not in PLANS:
+        return False
+    payment_ok = obj.get('payment_status') in ('paid', 'no_payment_required')
+    if not payment_ok:
+        return False
+    s = app.STORE[sid]
+    ent = s.setdefault('entitlements', {})
+    ent[plan] = True
+    ent['stripe_checkout_session_id'] = obj.get('id')
+    ent['stripe_customer_id'] = obj.get('customer')
+    ent['stripe_subscription_id'] = obj.get('subscription')
+    ent['updated_at'] = int(time.time())
+    if plan == 'deep':
+        v21.PAID_SESSIONS.add(sid)
+    else:
+        ent['pro'] = True
+        v21.PAID_SESSIONS.add(sid)
+    app.save(sid)
+    return True
+
+
 class H(v39.v38.H):
     def do_GET(self):
-        p = urlparse(self.path).path
+        parsed = urlparse(self.path)
+        p = parsed.path
         if p == '/api/stripe/status':
             return self._json({
                 'checkout_configured': bool(os.getenv('STRIPE_SECRET_KEY')),
@@ -72,16 +99,35 @@ class H(v39.v38.H):
                 'prices_configured': all(os.getenv(name) for name, _ in PLANS.values()),
                 'paywall_enabled': os.getenv('PAYWALL_ENABLED', '').lower() in ('1','true','yes','on'),
             })
+        if p == '/api/stripe/confirm':
+            try:
+                q = urllib.parse.parse_qs(parsed.query)
+                checkout_id = (q.get('session_id') or [''])[0].strip()
+                sid = (q.get('sid') or [''])[0].strip()
+                if not checkout_id or not sid or sid not in app.STORE:
+                    return self._json({'paid': False}, 400)
+                session = stripe_request('/v1/checkout/sessions/' + urllib.parse.quote(checkout_id, safe=''), None, 'GET')
+                expected_sid = session.get('client_reference_id') or (session.get('metadata') or {}).get('session_id')
+                if expected_sid != sid:
+                    return self._json({'paid': False}, 403)
+                granted = grant_entitlement(session)
+                return self._json({'paid': bool(granted), 'plan': (session.get('metadata') or {}).get('plan')})
+            except Exception as e:
+                print('stripe confirm error:', str(e))
+                return self._json({'paid': False}, 503)
         return super().do_GET()
 
     def do_POST(self):
         p = urlparse(self.path).path
-        if p == '/api/stripe/checkout':
+        if p in ('/api/stripe/checkout', '/api/checkout'):
             try:
                 body = self._body()
-                plan = (body.get('plan') or '').strip().lower()
+                plan = (body.get('plan') or 'deep').strip().lower()
+                sid = (body.get('session_id') or '').strip()
                 if plan not in PLANS:
                     return self._json({'error': 'invalid plan'}, 400)
+                if not sid or sid not in app.STORE:
+                    return self._json({'error': 'invalid session'}, 400)
                 env_name, mode = PLANS[plan]
                 price = os.getenv(env_name, '').strip()
                 if not price:
@@ -95,8 +141,10 @@ class H(v39.v38.H):
                     'mode': mode,
                     'line_items[0][price]': price,
                     'line_items[0][quantity]': '1',
-                    'success_url': base + '/?stripe=success&session_id={CHECKOUT_SESSION_ID}',
-                    'cancel_url': base + '/?stripe=cancel',
+                    'success_url': base + '/?stripe=success&session_id={CHECKOUT_SESSION_ID}&sid=' + urllib.parse.quote(sid),
+                    'cancel_url': base + '/?stripe=cancel&sid=' + urllib.parse.quote(sid),
+                    'client_reference_id': sid,
+                    'metadata[session_id]': sid,
                     'metadata[plan]': plan,
                     'allow_promotion_codes': 'false',
                 }
@@ -118,10 +166,10 @@ class H(v39.v38.H):
                 event = json.loads(raw.decode('utf-8'))
                 event_type = event.get('type', '')
                 obj = event.get('data', {}).get('object', {})
-                # Keep processing intentionally idempotent/stateless for now. The event
-                # is verified here; entitlement persistence is added only after the
-                # application's user/session ownership model is wired to checkout.
-                print('verified stripe event:', event_type, obj.get('id', ''))
+                granted = False
+                if event_type == 'checkout.session.completed':
+                    granted = grant_entitlement(obj)
+                print('verified stripe event:', event_type, obj.get('id', ''), 'granted=', granted)
                 return self._json({'received': True})
             except Exception as e:
                 print('stripe webhook error:', str(e))
@@ -132,5 +180,5 @@ class H(v39.v38.H):
 
 if __name__ == '__main__':
     os.chdir(app.ROOT)
-    print('Move A Mind v4.12 Stripe checkout + verified webhook foundation')
+    print('Move A Mind v4.13 Stripe session entitlement flow')
     ThreadingHTTPServer(('0.0.0.0', app.PORT), H).serve_forever()
