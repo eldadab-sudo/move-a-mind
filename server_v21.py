@@ -8,7 +8,7 @@ app=v20.app
 BASE_H=v20.v19.v18.H
 PRICE_USD=os.getenv('REPORT_PRICE_USD','4.90')
 CHECKOUT_URL=os.getenv('CHECKOUT_URL','').strip()
-PAYWALL_ENABLED=os.getenv('PAYWALL_ENABLED','0').strip()=='1'
+PAYWALL_ENABLED=True
 PAID_SESSIONS=set()
 def session_scenario(s):return s.get('scenario') or app.SCENARIOS[s['track']]
 def scenario_prompt(sc,track,turn):
@@ -30,7 +30,7 @@ class H(BASE_H):
    b=(app.WEB/'global.html').read_bytes();self.send_response(200);self.send_header('Content-Type','text/html; charset=utf-8');self.send_header('Content-Length',str(len(b)));self.end_headers();self.wfile.write(b);return
   if p=='/legacy':
    b=(app.WEB/'index.html').read_bytes();self.send_response(200);self.send_header('Content-Type','text/html; charset=utf-8');self.send_header('Content-Length',str(len(b)));self.end_headers();self.wfile.write(b);return
-  if p=='/api/catalog':return self._json({'domains':{k:len(v) for k,v in BANK.items()},'total':sum(len(v) for v in BANK.values()),'price_usd':PRICE_USD,'paywall_enabled':PAYWALL_ENABLED})
+  if p=='/api/catalog':return self._json({'domains':{k:len(v) for k,v in BANK.items()},'total':sum(len(v) for v in BANK.values()),'price_usd':PRICE_USD,'paywall_enabled':True})
   return super().do_GET()
  def do_POST(self):
   p=urlparse(self.path).path
@@ -60,9 +60,12 @@ class H(BASE_H):
     fallback=scoring.heuristic_report(s,sc);transcript='\n'.join([('Participant' if m.get('role')=='user' else sc.get('character','Counterpart'))+': '+m.get('content','') for m in s.get('messages',[])]);reflection=body.get('reflection')or{};rule='Write all report fields in English.' if lang=='en' else 'כתוב את כל שדות הדוח בעברית.'
     prompt=f'''You are a rigorous conversation-performance evaluator. Analyze behavior in this conversation only; do not diagnose personality.\nScenario: {sc.get('brief','')}\nTranscript:\n{transcript}\nSelf-reflection: {json.dumps(reflection,ensure_ascii=False)}\nScore exactly these 10 dimensions from 1.0 to 5.0: {', '.join(app.DIMS)}. For every dimension provide specific transcript evidence. Give 3 strengths, 3 improvements, the turning point, one better phrase, outcome analysis and a 5-8 sentence summary. Return JSON only. {rule}\nSchema: {{"dimensions":[{{"name":"...","score":4.2,"evidence":"..."}}],"outcome":"...","strengths":["..."],"improvements":["..."],"turning_point":"...","better_phrase":"...","summary":"..."}}'''
     raw=app.ai('Return valid JSON only.',[{'role':'user','content':prompt}],2400);rep=scoring.normalize_report(scoring.extract_json(raw),fallback);rep['alpha_notice']='Experimental performance feedback for this conversation only — not a validated psychological measure.' if lang=='en' else 'משוב ביצוע ניסויי לשיחה הזו בלבד — אינו מדד פסיכולוגי מאומת.';s['report']=rep;app.save(sid)
-   ent=s.get('entitlements')or{};paid=(sid in PAID_SESSIONS) or bool(ent.get('deep') or ent.get('pro')) or not PAYWALL_ENABLED
+   ent=s.get('entitlements')or{};paid=(sid in PAID_SESSIONS) or bool(ent.get('deep') or ent.get('pro'))
    if paid:return self._json(rep)
-   top=max(rep.get('dimensions',[]),key=lambda d:d.get('score',0),default={});low=min(rep.get('dimensions',[]),key=lambda d:d.get('score',9),default={});preview={'performance_score':rep.get('performance_score'),'outcome':rep.get('outcome'),'top_insight':(f"Strongest signal: {top.get('name')} ({top.get('score')}/5). Biggest opportunity: {low.get('name')} ({low.get('score')}/5)." if lang=='en' else f"האות החזק ביותר: {top.get('name')} ({top.get('score')}/5). הזדמנות השיפור הגדולה ביותר: {low.get('name')} ({low.get('score')}/5).")};return self._json({'locked':True,'preview':preview,'performance_score':rep.get('performance_score'),'outcome':rep.get('outcome'),'alpha_notice':rep.get('alpha_notice'),'price_usd':PRICE_USD})
+   dims=rep.get('dimensions',[]);top=max(dims,key=lambda d:d.get('score',0),default={})
+   top_insight=(f"Your strongest signal was {top.get('name','one conversation skill')} ({top.get('score','—')}/5). The full report shows the evidence, turning point, weaker dimensions and exactly what to change next." if lang=='en' else f"החוזקה הבולטת שלך בשיחה הייתה {top.get('name','אחד מממדי השיחה')} ({top.get('score','—')}/5). בדוח המלא תראה את הראיות, נקודת המפנה, הממדים החלשים ומה בדיוק כדאי לשנות בשיחה הבאה.")
+   preview={'performance_score':rep.get('performance_score'),'top_insight':top_insight}
+   return self._json({'locked':True,'preview':preview,'performance_score':rep.get('performance_score'),'alpha_notice':rep.get('alpha_notice'),'price_usd':PRICE_USD})
   return super().do_POST()
 if __name__=='__main__':
  os.chdir(app.ROOT);ThreadingHTTPServer(('0.0.0.0',app.PORT),H).serve_forever()
