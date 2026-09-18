@@ -82,6 +82,14 @@ class H(v39.v38.H):
     if not sid or sid not in app.STORE:return self._json({'error':'invalid session'},400)
     env_name,mode=PLANS[plan];price=os.getenv(env_name,'').strip()
     if not price:return self._json({'error':'price not configured'},503)
+    try:
+     _price_obj=stripe_request('/v1/prices/'+urllib.parse.quote(price,safe=''),None,'GET')
+     if not _price_obj.get('active'):return self._json({'error':'selected plan is not active'},503)
+     _ptype=((_price_obj.get('recurring')or{}).get('interval'))
+     if mode=='payment' and _price_obj.get('type')!='one_time':return self._json({'error':'deep report price must be one-time'},503)
+     if mode=='subscription' and _price_obj.get('type')!='recurring':return self._json({'error':'subscription price is not recurring'},503)
+    except Exception as _e:
+     print('stripe price validation error',plan,_e);return self._json({'error':'selected payment plan is not available'},503)
     base=os.getenv('PUBLIC_BASE_URL','').strip().rstrip('/')or self.headers.get('X-Forwarded-Proto','https')+'://'+self.headers.get('Host','')
     fields={'mode':mode,'line_items[0][price]':price,'line_items[0][quantity]':'1','success_url':base+'/?stripe=success&session_id={CHECKOUT_SESSION_ID}&sid='+urllib.parse.quote(sid),'cancel_url':base+'/?stripe=cancel&sid='+urllib.parse.quote(sid)+'&return=result','client_reference_id':sid,'metadata[session_id]':sid,'metadata[plan]':plan}
     email=(body.get('email')or'').strip()
