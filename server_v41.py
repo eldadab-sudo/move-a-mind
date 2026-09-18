@@ -14,7 +14,45 @@ html=html.replace('</head>',r'''<style id="mamV426fix">
 @media(max-width:600px){.mamPayGrid{display:grid!important;grid-template-columns:1fr!important;overflow:visible!important}.mamPlanCard{width:100%!important;min-height:0!important;flex:none!important}.mamBenefits{display:block!important;visibility:visible!important}.mamBenefits li{display:list-item!important;visibility:visible!important}}
 </style></head>''',1)
 html=html.replace('<body>',r'''<body><div id="mamNeedConversation" dir="rtl"><div class="mamNeedBox"><div class="mamNeedIcon">💬</div><h2>עדיין אין מספיק מידע לניתוח מקצועי</h2><p id="mamNeedText">השיחה עדיין קצרה או שטחית מדי כדי להפיק ממנה דוח ותובנות אמינים. המשך את השיחה, התייחס למה שנאמר לך, נסה לקדם את הצד השני והעמק את התגובה.</p><button id="mamBackToConversation">חזרה לשיחה</button></div></div>''',1)
-html=html.replace('</body>',r'''<script id="mamProgress426">
+html=html.replace('
+<script id="mamCheckoutState429">
+(function(){
+ const KEY='mam_checkout_state_v1';
+ function saveCheckoutState(){
+   try{
+     const state={sid:window.sid||localStorage.getItem('mam_sid')||'',screen:document.querySelector('.screen.active')?.id||'result',savedAt:Date.now()};
+     localStorage.setItem(KEY,JSON.stringify(state));
+     if(state.sid)localStorage.setItem('mam_sid',state.sid);
+   }catch(e){}
+ }
+ window.addEventListener('pagehide',saveCheckoutState);
+ document.addEventListener('click',e=>{if(e.target.closest('.mamPlanBtn'))saveCheckoutState();},true);
+ const u=new URLSearchParams(location.search);
+ if(u.get('stripe')==='cancel'){
+   try{
+     const state=JSON.parse(localStorage.getItem(KEY)||'{}');
+     const keep=u.get('sid')||state.sid||localStorage.getItem('mam_sid');
+     if(keep){window.sid=keep;localStorage.setItem('mam_sid',keep);}
+     setTimeout(async()=>{
+       try{
+         if(!keep)return;
+         const r=await fetch('/api/score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:keep,reflection:{},lang:window.lang||'he'})});
+         const j=await r.json();
+         window.lastReport=j;
+         const score=document.querySelector('#score'),out=document.querySelector('#outcome'),notice=document.querySelector('#notice');
+         if(score)score.textContent=j.performance_score??j.preview?.performance_score??'—';
+         if(out)out.textContent=j.outcome||j.preview?.outcome||'';
+         if(notice)notice.textContent=j.alpha_notice||'';
+         if(j.locked&&typeof renderLocked==='function')renderLocked(j);else if(typeof renderFull==='function')renderFull(j);
+         if(typeof go==='function')go('result');
+         history.replaceState({},'',location.pathname);
+       }catch(e){}
+     },250);
+   }catch(e){}
+ }
+})();
+</script>
+</body>',r'''<script id="mamProgress426">
 (function(){
  const tips=[
  'אנשים נוטים להיות פתוחים יותר לרעיונות חדשים כשהם מרגישים שמקשיבים להם באמת.',
@@ -44,4 +82,4 @@ class H(v40.H):
     def end_headers(self):
         self.send_header('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');self.send_header('Pragma','no-cache');self.send_header('Expires','0');super().end_headers()
 if __name__=='__main__':
-    os.chdir(app.ROOT);print('Move A Mind v4.26 - rotating tips and conversation quality gate');ThreadingHTTPServer(('0.0.0.0',app.PORT),H).serve_forever()
+    os.chdir(app.ROOT);print('Move A Mind v4.29 - checkout return state preserved');ThreadingHTTPServer(('0.0.0.0',app.PORT),H).serve_forever()
