@@ -84,8 +84,7 @@ r'''<script id="mamProgress426">
  }
  window.addEventListener('load',()=>setTimeout(restoreCancel,180));
 })();
-</script>
-</body>''',1)
+</script></body>''',1)
 INDEX.write_text(html,encoding='utf-8')
 class H(v40.H):
     def end_headers(self):
