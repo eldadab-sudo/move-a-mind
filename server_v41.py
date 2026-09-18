@@ -38,7 +38,7 @@ html=html.replace('</head>',r'''<style id="mamV426fix">
 @media(max-width:600px){.mamPayGrid{display:grid!important;grid-template-columns:1fr!important;overflow:visible!important}.mamPlanCard{width:100%!important;min-height:0!important;flex:none!important}.mamBenefits{display:block!important;visibility:visible!important}.mamBenefits li{display:list-item!important;visibility:visible!important}}
 </style></head>''',1)
 html=html.replace('<body>',r'''<body><div id="mamNeedConversation" dir="rtl"><div class="mamNeedBox"><div class="mamNeedIcon">💬</div><h2>עדיין אין מספיק מידע לניתוח מקצועי</h2><p id="mamNeedText">השיחה עדיין קצרה או שטחית מדי כדי להפיק ממנה דוח ותובנות אמינים. המשך את השיחה, התייחס למה שנאמר לך, נסה לקדם את הצד השני והעמק את התגובה.</p><button id="mamBackToConversation">חזרה לשיחה</button></div></div>''',1)
-r'''<script id="mamProgress426">
+html=html.replace('</body>',r'''<script id="mamProgress426">
 (function(){
  const tips=[
  'אנשים נוטים להיות פתוחים יותר לרעיונות חדשים כשהם מרגישים שמקשיבים להם באמת.',
