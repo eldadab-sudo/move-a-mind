@@ -87,5 +87,5 @@ class H(v41.H):
 
 if __name__ == '__main__':
     os.chdir(app.ROOT)
-    print('Move A Mind v4.32 - grounded engine + persistent checkout recovery')
+    print('Move A Mind v4.33 - Stripe plans + persistent checkout return')
     ThreadingHTTPServer(('0.0.0.0', app.PORT), H).serve_forever()
