@@ -54,7 +54,16 @@ def grant_entitlement(obj):
 class H(v39.v38.H):
  def do_GET(self):
   parsed=urlparse(self.path);p=parsed.path
-  if p=='/api/stripe/status':return self._json({'checkout_configured':bool(os.getenv('STRIPE_SECRET_KEY')),'webhook_configured':bool(os.getenv('STRIPE_WEBHOOK_SECRET')),'prices_configured':all(os.getenv(n) for n,_ in PLANS.values()),'paywall_enabled':True})
+  if p=='/api/stripe/status':
+   plans={}
+   for _plan,(_env,_mode) in PLANS.items():
+    _pid=os.getenv(_env,'').strip();_ok=False;_err=''
+    if _pid and os.getenv('STRIPE_SECRET_KEY','').strip():
+     try:
+      _price=stripe_request('/v1/prices/'+urllib.parse.quote(_pid,safe=''),None,'GET');_ok=bool(_price.get('active')) and _price.get('id')==_pid
+     except Exception as _e:_err=str(_e)[:180]
+    plans[_plan]={'configured':bool(_pid),'verified':_ok,'mode':_mode,'error':_err}
+   return self._json({'checkout_configured':bool(os.getenv('STRIPE_SECRET_KEY')),'webhook_configured':bool(os.getenv('STRIPE_WEBHOOK_SECRET')),'prices_configured':all(x['configured'] for x in plans.values()),'plans':plans,'paywall_enabled':True})
   if p=='/api/stripe/confirm':
    try:
     q=urllib.parse.parse_qs(parsed.query);cid=(q.get('session_id')or[''])[0];sid=(q.get('sid')or[''])[0]
