@@ -4,11 +4,23 @@ import server_v40 as v40
 app=v40.app
 # Restore persisted conversations/reports after a restart so checkout return links remain valid.
 try:
-    for _p in app.DATA.glob('*.json'):
+    _session_dirs=[app.DATA]
+    _persistent=__import__('pathlib').Path('/persistent/sessions')
+    try: _persistent.mkdir(parents=True,exist_ok=True); _session_dirs.append(_persistent)
+    except Exception: pass
+    for _dir in _session_dirs:
+        for _p in _dir.glob('*.json'):
+            try:
+                _s=__import__('json').loads(_p.read_text(encoding='utf-8'))
+                if isinstance(_s,dict) and _s.get('id'): app.STORE[_s['id']]=_s
+            except Exception: pass
+    _base_save=app.save
+    def _durable_save(_sid):
+        _base_save(_sid)
         try:
-            _s=__import__('json').loads(_p.read_text(encoding='utf-8'))
-            if isinstance(_s,dict) and _s.get('id'): app.STORE[_s['id']]=_s
-        except Exception: pass
+            (_persistent/f'{_sid}.json').write_text(__import__('json').dumps(app.STORE[_sid],ensure_ascii=False,indent=2),encoding='utf-8')
+        except Exception as _e: print('persistent session save warning',_e)
+    app.save=_durable_save
 except Exception as _e: print('session restore warning',_e)
 INDEX=app.WEB/'global.html'
 html=INDEX.read_text(encoding='utf-8')
@@ -90,4 +102,4 @@ class H(v40.H):
     def end_headers(self):
         self.send_header('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');self.send_header('Pragma','no-cache');self.send_header('Expires','0');super().end_headers()
 if __name__=='__main__':
-    os.chdir(app.ROOT);print('Move A Mind v4.30 - checkout return and persisted report recovery');ThreadingHTTPServer(('0.0.0.0',app.PORT),H).serve_forever()
+    os.chdir(app.ROOT);print('Move A Mind v4.31 - durable checkout session recovery');ThreadingHTTPServer(('0.0.0.0',app.PORT),H).serve_forever()
