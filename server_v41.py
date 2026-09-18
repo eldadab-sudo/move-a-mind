@@ -2,6 +2,14 @@ import os
 from http.server import ThreadingHTTPServer
 import server_v40 as v40
 app=v40.app
+# Restore persisted conversations/reports after a restart so checkout return links remain valid.
+try:
+    for _p in app.DATA.glob('*.json'):
+        try:
+            _s=__import__('json').loads(_p.read_text(encoding='utf-8'))
+            if isinstance(_s,dict) and _s.get('id'): app.STORE[_s['id']]=_s
+        except Exception: pass
+except Exception as _e: print('session restore warning',_e)
 INDEX=app.WEB/'global.html'
 html=INDEX.read_text(encoding='utf-8')
 html=html.replace('<span class="mamStatus mamDone">✓</span>','<span class="mamStatus mamWaiting"></span>')
@@ -82,4 +90,4 @@ class H(v40.H):
     def end_headers(self):
         self.send_header('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');self.send_header('Pragma','no-cache');self.send_header('Expires','0');super().end_headers()
 if __name__=='__main__':
-    os.chdir(app.ROOT);print('Move A Mind v4.29 - checkout return state preserved');ThreadingHTTPServer(('0.0.0.0',app.PORT),H).serve_forever()
+    os.chdir(app.ROOT);print('Move A Mind v4.30 - checkout return and persisted report recovery');ThreadingHTTPServer(('0.0.0.0',app.PORT),H).serve_forever()
