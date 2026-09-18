@@ -2,6 +2,10 @@ import os
 from http.server import ThreadingHTTPServer
 import server_v40 as v40
 app=v40.app
+# Use the Railway persistent volume for session/report storage when available.
+try:
+    _persistent_data=__import__('pathlib').Path('/persistent/sessions'); _persistent_data.mkdir(parents=True,exist_ok=True); app.DATA=_persistent_data
+except Exception: pass
 # Restore persisted conversations/reports after a restart so checkout return links remain valid.
 try:
     _session_dirs=[app.DATA]
