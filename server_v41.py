@@ -38,45 +38,7 @@ html=html.replace('</head>',r'''<style id="mamV426fix">
 @media(max-width:600px){.mamPayGrid{display:grid!important;grid-template-columns:1fr!important;overflow:visible!important}.mamPlanCard{width:100%!important;min-height:0!important;flex:none!important}.mamBenefits{display:block!important;visibility:visible!important}.mamBenefits li{display:list-item!important;visibility:visible!important}}
 </style></head>''',1)
 html=html.replace('<body>',r'''<body><div id="mamNeedConversation" dir="rtl"><div class="mamNeedBox"><div class="mamNeedIcon">💬</div><h2>עדיין אין מספיק מידע לניתוח מקצועי</h2><p id="mamNeedText">השיחה עדיין קצרה או שטחית מדי כדי להפיק ממנה דוח ותובנות אמינים. המשך את השיחה, התייחס למה שנאמר לך, נסה לקדם את הצד השני והעמק את התגובה.</p><button id="mamBackToConversation">חזרה לשיחה</button></div></div>''',1)
-html=html.replace('
-<script id="mamCheckoutState429">
-(function(){
- const KEY='mam_checkout_state_v1';
- function saveCheckoutState(){
-   try{
-     const state={sid:window.sid||localStorage.getItem('mam_sid')||'',screen:document.querySelector('.screen.active')?.id||'result',savedAt:Date.now()};
-     localStorage.setItem(KEY,JSON.stringify(state));
-     if(state.sid)localStorage.setItem('mam_sid',state.sid);
-   }catch(e){}
- }
- window.addEventListener('pagehide',saveCheckoutState);
- document.addEventListener('click',e=>{if(e.target.closest('.mamPlanBtn'))saveCheckoutState();},true);
- const u=new URLSearchParams(location.search);
- if(u.get('stripe')==='cancel'){
-   try{
-     const state=JSON.parse(localStorage.getItem(KEY)||'{}');
-     const keep=u.get('sid')||state.sid||localStorage.getItem('mam_sid');
-     if(keep){window.sid=keep;localStorage.setItem('mam_sid',keep);}
-     setTimeout(async()=>{
-       try{
-         if(!keep)return;
-         const r=await fetch('/api/score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:keep,reflection:{},lang:window.lang||'he'})});
-         const j=await r.json();
-         window.lastReport=j;
-         const score=document.querySelector('#score'),out=document.querySelector('#outcome'),notice=document.querySelector('#notice');
-         if(score)score.textContent=j.performance_score??j.preview?.performance_score??'—';
-         if(out)out.textContent=j.outcome||j.preview?.outcome||'';
-         if(notice)notice.textContent=j.alpha_notice||'';
-         if(j.locked&&typeof renderLocked==='function')renderLocked(j);else if(typeof renderFull==='function')renderFull(j);
-         if(typeof go==='function')go('result');
-         history.replaceState({},'',location.pathname);
-       }catch(e){}
-     },250);
-   }catch(e){}
- }
-})();
-</script>
-</body>',r'''<script id="mamProgress426">
+r'''<script id="mamProgress426">
 (function(){
  const tips=[
  'אנשים נוטים להיות פתוחים יותר לרעיונות חדשים כשהם מרגישים שמקשיבים להם באמת.',
@@ -100,10 +62,33 @@ html=html.replace('
  if(finish){finish.addEventListener('click',function(e){if(!conversationIsSubstantial()){e.preventDefault();e.stopImmediatePropagation();modal?.classList.add('on');}},true);}
  if(back)back.onclick=()=>modal.classList.remove('on');
 })();
-</script></body>''',1)
+</script><script id="mamCheckoutState432">
+(function(){
+ const KEY='mam_checkout_state_v2';
+ function getSid(){try{return localStorage.getItem('mam_sid')||''}catch(e){return ''}}
+ function save(){try{localStorage.setItem(KEY,JSON.stringify({sid:getSid(),savedAt:Date.now()}))}catch(e){}}
+ document.addEventListener('click',e=>{if(e.target.closest('.mamPlanBtn'))save()},true);
+ window.addEventListener('pagehide',save);
+ async function restoreCancel(){
+   const u=new URLSearchParams(location.search);if(u.get('stripe')!=='cancel')return;
+   let st={};try{st=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}
+   const keep=u.get('sid')||st.sid||getSid();if(!keep)return;
+   try{localStorage.setItem('mam_sid',keep)}catch(e){}
+   try{
+     const r=await fetch('/api/score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:keep,reflection:{},lang:(localStorage.getItem('mam_lang')||'he')})});
+     const j=await r.json();if(!r.ok)throw Error('restore');
+     sid=keep;lastReport=j;
+     $('#score').textContent=j.performance_score??j.preview?.performance_score??'—';$('#outcome').textContent=j.outcome||j.preview?.outcome||'';$('#notice').textContent=j.alpha_notice||'';
+     $('#freeInsight').innerHTML='';$('#fullReport').innerHTML='';if(j.locked)renderLocked(j);else renderFull(j);go('result');history.replaceState({},'',location.pathname);
+   }catch(e){}
+ }
+ window.addEventListener('load',()=>setTimeout(restoreCancel,180));
+})();
+</script>
+</body>''',1)
 INDEX.write_text(html,encoding='utf-8')
 class H(v40.H):
     def end_headers(self):
         self.send_header('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');self.send_header('Pragma','no-cache');self.send_header('Expires','0');super().end_headers()
 if __name__=='__main__':
-    os.chdir(app.ROOT);print('Move A Mind v4.31 - durable checkout session recovery');ThreadingHTTPServer(('0.0.0.0',app.PORT),H).serve_forever()
+    os.chdir(app.ROOT);print('Move A Mind v4.32 - Stripe cancel returns to saved report');ThreadingHTTPServer(('0.0.0.0',app.PORT),H).serve_forever()
