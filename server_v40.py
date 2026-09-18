@@ -74,7 +74,7 @@ class H(v39.v38.H):
     env_name,mode=PLANS[plan];price=os.getenv(env_name,'').strip()
     if not price:return self._json({'error':'price not configured'},503)
     base=os.getenv('PUBLIC_BASE_URL','').strip().rstrip('/')or self.headers.get('X-Forwarded-Proto','https')+'://'+self.headers.get('Host','')
-    fields={'mode':mode,'line_items[0][price]':price,'line_items[0][quantity]':'1','success_url':base+'/?stripe=success&session_id={CHECKOUT_SESSION_ID}&sid='+urllib.parse.quote(sid),'cancel_url':base+'/?stripe=cancel&sid='+urllib.parse.quote(sid),'client_reference_id':sid,'metadata[session_id]':sid,'metadata[plan]':plan}
+    fields={'mode':mode,'line_items[0][price]':price,'line_items[0][quantity]':'1','success_url':base+'/?stripe=success&session_id={CHECKOUT_SESSION_ID}&sid='+urllib.parse.quote(sid),'cancel_url':base+'/?stripe=cancel&sid='+urllib.parse.quote(sid)+'&return=result','client_reference_id':sid,'metadata[session_id]':sid,'metadata[plan]':plan}
     email=(body.get('email')or'').strip()
     if email:fields['customer_email']=email
     s=stripe_request('/v1/checkout/sessions',fields);return self._json({'url':s.get('url'),'id':s.get('id')})
