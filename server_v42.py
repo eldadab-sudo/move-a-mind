@@ -87,5 +87,5 @@ class H(v41.H):
 
 if __name__ == '__main__':
     os.chdir(app.ROOT)
-    print('Move A Mind v4.30 - grounded engine + checkout state recovery')
+    print('Move A Mind v4.31 - grounded engine + durable checkout recovery')
     ThreadingHTTPServer(('0.0.0.0', app.PORT), H).serve_forever()
