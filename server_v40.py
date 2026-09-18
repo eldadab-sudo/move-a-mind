@@ -86,7 +86,7 @@ class H(v39.v38.H):
      _price_obj=stripe_request('/v1/prices/'+urllib.parse.quote(price,safe=''),None,'GET')
      if not _price_obj.get('active'):return self._json({'error':'selected plan is not active'},503)
      _ptype=((_price_obj.get('recurring')or{}).get('interval'))
-     if mode=='payment' and _price_obj.get('type')!='one_time':return self._json({'error':'deep report price must be one-time'},503)
+     if mode=='payment' and _price_obj.get('type')=='recurring':return self._json({'error':'deep report price must be one-time'},503)
      if mode=='subscription' and _price_obj.get('type')!='recurring':return self._json({'error':'subscription price is not recurring'},503)
     except Exception as _e:
      print('stripe price validation error',plan,_e);return self._json({'error':'selected payment plan is not available'},503)
