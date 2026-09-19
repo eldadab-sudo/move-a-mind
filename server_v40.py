@@ -82,22 +82,27 @@ class H(v39.v38.H):
    sid=(body.get('session_id')or'').strip();lang=body.get('lang','he')
    if sid not in app.STORE:return self._json({'error':'not found'},404)
    s=app.STORE[sid];ent=s.get('entitlements')or{};paid=(sid in v21.PAID_SESSIONS) or bool(ent.get('deep') or ent.get('pro'))
-   # Reuse v21's scoring implementation by temporarily marking paid so it returns the report,
-   # then strip it back to a teaser for unpaid users.
-   was=sid in v21.PAID_SESSIONS
-   v21.PAID_SESSIONS.add(sid)
-   try:
-    # Capture v21 response without sending it to the socket.
-    captured={}
-    oldjson=self._json
-    def cap(obj,status=200):captured.update({'obj':obj,'status':status});return None
-    self._json=cap
-    v21.H.do_POST(self)
-    rep=captured.get('obj') or {}
-   finally:
-    self._json=oldjson
-    if not was and not paid:v21.PAID_SESSIONS.discard(sid)
-   if paid:return self._json(rep,captured.get('status',200))
+   # Build/cache the report directly. Do not recursively invoke the HTTP handler:
+   # that path can re-read the request body and leave mobile clients waiting until timeout.
+   rep=s.get('report')
+   if not rep:
+    sc=v21.session_scenario(s)
+    fallback=v21.scoring.heuristic_report(s,sc)
+    transcript='\n'.join([('Participant' if m.get('role')=='user' else sc.get('character','Counterpart'))+': '+m.get('content','') for m in s.get('messages',[])])
+    reflection=body.get('reflection') or {}
+    rule='Write all report fields in English.' if lang=='en' else 'כתוב את כל שדות הדוח בעברית.'
+    prompt=f'''You are a rigorous conversation-performance evaluator. Analyze behavior in this conversation only; do not diagnose personality.
+Scenario: {sc.get('brief','')}
+Transcript:
+{transcript}
+Self-reflection: {json.dumps(reflection,ensure_ascii=False)}
+Score exactly these 10 dimensions from 1.0 to 5.0: {', '.join(app.DIMS)}. For every dimension provide specific transcript evidence. Give 3 strengths, 3 improvements, the turning point, one better phrase, outcome analysis and a 5-8 sentence summary. Return JSON only. {rule}
+Schema: {{"dimensions":[{{"name":"...","score":4.2,"evidence":"..."}}],"outcome":"...","strengths":["..."],"improvements":["..."],"turning_point":"...","better_phrase":"...","summary":"..."}}'''
+    raw=app.ai('Return valid JSON only.',[{'role':'user','content':prompt}],1800)
+    rep=v21.scoring.normalize_report(v21.scoring.extract_json(raw),fallback)
+    rep['alpha_notice']='Experimental performance feedback for this conversation only — not a validated psychological measure.' if lang=='en' else 'משוב ביצוע ניסויי לשיחה הזו בלבד — אינו מדד פסיכולוגי מאומת.'
+    s['report']=rep;app.save(sid)
+   if paid:return self._json(rep,200)
    dims=rep.get('dimensions',[]) if isinstance(rep,dict) else []
    top=max(dims,key=lambda d:d.get('score',0),default={})
    if lang=='en':top_insight=f"One signal stood out: {top.get('name','a conversation skill')}. Unlock the report to see the evidence, turning point, full scores and what to change next."
