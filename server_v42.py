@@ -102,5 +102,5 @@ class H(v41.H):
 
 if __name__ == '__main__':
     os.chdir(app.ROOT)
-    print('Move A Mind v4.39 - repetition guard + end-state quality')
+    print('Move A Mind v4.40 - repetition guard + completion-aware analysis')
     ThreadingHTTPServer(('0.0.0.0', app.PORT), H).serve_forever()
