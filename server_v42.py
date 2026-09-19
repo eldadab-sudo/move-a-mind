@@ -48,7 +48,7 @@ def grounded_prompt(sc, track, turn, messages):
 9. אל תחשוף עובדות נסתרות אלא אם המשתמש בירר באופן שמצדיק זאת.
 10. כתוב בעברית טבעית, פשוטה ושיחתית, בדרך כלל 1–3 משפטים. העדף ניסוח כמו שאדם אמיתי היה אומר בשיחה, לא שפת דוח או ייעוץ.
 11. לפני התשובה בצע בדיקה פנימית: האם הכנסתי מילה או נושא שלא נובעים מההודעה האחרונה או מההקשר? אם כן, מחק אותם ונסח מחדש. אל תציג את הבדיקה למשתמש.
-12. אל תכתוב [END]. השיחה מסתיימת רק כשהמשתמש בוחר לסיים.
+12. אם הצדדים הגיעו להסכמה ברורה, החלטה מעשית או סגירה טבעית של העניין, אל תמשיך לפתוח שוב את אותו נושא ואל תחזור על אותה התחייבות. הגב בקצרה ובטבעיות כאדם שמסיים שיחה.\n13. הימנע מחזרה סמנטית: לפני התשובה השווה אותה ל-3 התגובות האחרונות של הדמות. אם היא אומרת למעשה אותו דבר, נסח תגובה שונה שמקדמת או סוגרת את השיחה.\n14. אל תכתוב [END]. השיחה מסתיימת רק כשהמשתמש בוחר לסיים.
 
 השב עכשיו רק כדמות ורק להודעה האחרונה של המשתמש.
 """
@@ -79,6 +79,21 @@ class H(v41.H):
         if not ans:
             ans = 'אני רוצה להבין את הנקודה הזו טוב יותר. תוכל/י לפרט?'
         ans = (ans or '').replace('[END]', '').strip()
+        # Guard against near-verbatim repetition from the model.
+        prev=[(m.get('content') or '').strip() for m in s.get('messages',[]) if m.get('role')=='assistant'][-3:]
+        def norm(x):
+            import re
+            return set(re.findall(r'[\\wא-ת]+',x.lower()))
+        a=norm(ans)
+        repeated=False
+        for p in prev:
+            b=norm(p)
+            if a and b and len(a & b)/max(1,min(len(a),len(b)))>=0.72:
+                repeated=True;break
+        if repeated:
+            retry=prompt+"\\nהתגובה הראשונה שלך חזרה על תגובה קודמת. נסח עכשיו תגובה חדשה וקצרה שאינה חוזרת על מידע שכבר נאמר. אם העניין כבר נסגר, הסתפק באישור טבעי קצר וסגור את הנושא."
+            ans2=app.ai(retry,s['messages'])
+            if ans2: ans=(ans2 or '').replace('[END]','').strip()
         s['messages'].append({'role': 'assistant', 'content': ans})
         s['status'] = 'active'
         app.save(sid)
@@ -87,5 +102,5 @@ class H(v41.H):
 
 if __name__ == '__main__':
     os.chdir(app.ROOT)
-    print('Move A Mind v4.38 - score deadlock fixed + context engine')
+    print('Move A Mind v4.39 - repetition guard + end-state quality')
     ThreadingHTTPServer(('0.0.0.0', app.PORT), H).serve_forever()
