@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 import server_v39 as v39
 import server_v21 as v21
 app=v39.app
-PLANS={'deep':('STRIPE_PRICE_DEEP','payment'),'monthly':('STRIPE_PRICE_MONTHLY','subscription'),'annual':('STRIPE_PRICE_ANNUAL','subscription')}
+# v4.20: server_v39 imports server_v38, whose score handler can bypass the v21 paywall.\n# Force the shared app to enforce paywall semantics and intercept /api/score below.\nPLANS={'deep':('STRIPE_PRICE_DEEP','payment'),'monthly':('STRIPE_PRICE_MONTHLY','subscription'),'annual':('STRIPE_PRICE_ANNUAL','subscription')}
 INDEX=app.WEB/'global.html';html=INDEX.read_text(encoding='utf-8')
 html=html.replace("onclick=\"location.href='/'\" data-t=\"again\"","onclick=\"chosen=null;sid=null;renderDomains();go('choose')\" data-t=\"again\"")
 css=r'''<style id="mamV421">#mamAnalysisLoading{position:fixed;inset:0;z-index:99999;background:linear-gradient(160deg,#fbfaf6,#f2efe7);display:none;overflow:auto;padding:22px 18px;color:#10201e}#mamAnalysisLoading.on{display:block}.mamLoadWrap{max-width:560px;margin:0 auto;text-align:center}.mamFacesRing{width:164px;height:164px;border:3px solid #bdd0ca;border-radius:50%;margin:16px auto 18px;position:relative;display:grid;place-items:center}.mamFacesRing:before,.mamFacesRing:after{content:'➤';position:absolute;color:#075d55;font-size:24px}.mamFacesRing:before{right:-2px;top:23px;transform:rotate(35deg)}.mamFacesRing:after{left:-2px;bottom:23px;transform:rotate(215deg)}.mamFacesCrop{width:112px;height:112px;border-radius:50%;overflow:hidden;background:#0d2926;position:relative;animation:mamFacesSpin 2.2s linear infinite}.mamFacesCrop img{position:absolute;width:165px;height:165px;max-width:none;left:50%;top:-5px;transform:translateX(-50%);object-fit:cover;object-position:center top}.mamLoadTitle{font-size:38px;font-weight:900;margin:8px 0 6px}.mamLoadText{font-size:18px;line-height:1.5;color:#1d5f58;margin:0 auto 22px;max-width:480px}.mamSteps{background:rgba(255,255,255,.82);border:1px solid #d8ddd9;border-radius:25px;padding:6px 24px;text-align:right;box-shadow:0 14px 38px rgba(20,45,40,.06)}.mamStep{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 0;border-bottom:1px solid #e4e7e3;font-size:17px}.mamStep:last-child{border:0}.mamStatus{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;flex:0 0 34px}.mamDone{background:#0a776c;color:#fff;font-size:22px}.mamWorking{border:4px solid #d7e7e2;border-top-color:#0a776c;animation:mamFacesSpin .9s linear infinite}.mamWaiting{background:#e8e9e7}.mamTip{margin-top:20px;background:#e4efeb;border-radius:24px;padding:20px 24px;text-align:right;color:#205a53;font-size:16px;line-height:1.55}.mamTip b{display:block;font-size:18px;margin-bottom:5px}.mamTime{margin:22px 0;color:#777;font-size:15px}.premium{background:#fbfaf7!important;color:#10201e!important;border:1px solid #d9ddd8!important}.premium p{color:#3f4a46!important}.mamPayGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:18px}.mamPlanCard{position:relative;background:#fff;color:#10201e;border:1px solid #d9ddd9;border-radius:18px;padding:18px 12px;display:flex;flex-direction:column;min-width:0;min-height:310px;overflow:hidden}.mamPlanCard.best{border-color:#8cc9b8}.mamBadge{background:#ccefe3;color:#075d55;border-radius:8px;padding:4px 7px;font-size:12px;font-weight:800;margin:-10px 0 8px}.mamPlanName{font-weight:900;font-size:18px;direction:ltr}.mamPrice{font-size:34px;font-weight:900;margin:7px 0 0;direction:ltr}.mamPeriod{font-size:13px;color:#5f6c68;direction:ltr}.mamBenefits{list-style:none;padding:0;margin:16px 0;text-align:right;line-height:1.8;font-size:14px;flex:1;color:#20302d}.mamBenefits li:before{content:'✓';color:#08756b;font-weight:900;margin-left:7px}.mamPlanBtn{width:100%;border:0;border-radius:12px;padding:12px;background:#08756b;color:#fff;font-weight:900;font-size:16px}.mamLockedPanel{border:1px solid #d9ddd9;border-radius:22px;padding:28px 18px;background:#fff;margin:16px 0;text-align:center}.mamLock{font-size:38px}.mamFeatureRow{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center;margin:20px 0;color:#174e49}.mamFeatureIcon{font-size:32px}.mamRetry{margin-top:12px;width:100%;border:1px solid #0a5f57;border-radius:30px;background:transparent;padding:13px;font-weight:800;color:#183b38}@keyframes mamFacesSpin{to{transform:rotate(360deg)}}@media(max-width:600px){.mamLoadTitle{font-size:32px}.premium{padding:18px!important;margin-left:-8px!important;margin-right:-8px!important}.mamPayGrid{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;padding:4px 2px 12px}.mamPlanCard{flex:0 0 82%;scroll-snap-align:center;min-height:340px}.mamFeatureRow{font-size:13px}.mamFacesRing{width:148px;height:148px}.mamFacesCrop{width:100px;height:100px}.mamFacesCrop img{width:150px;height:150px}}</style>'''
@@ -75,6 +75,34 @@ class H(v39.v38.H):
   return super().do_GET()
  def do_POST(self):
   p=urlparse(self.path).path
+  # Enforce Preview -> Paywall for every unpaid session, regardless of older handler inheritance.
+  if p=='/api/score':
+   try:body=self._body()
+   except:return self._json({'error':'bad request'},400)
+   sid=(body.get('session_id')or'').strip();lang=body.get('lang','he')
+   if sid not in app.STORE:return self._json({'error':'not found'},404)
+   s=app.STORE[sid];ent=s.get('entitlements')or{};paid=(sid in v21.PAID_SESSIONS) or bool(ent.get('deep') or ent.get('pro'))
+   # Reuse v21's scoring implementation by temporarily marking paid so it returns the report,
+   # then strip it back to a teaser for unpaid users.
+   was=sid in v21.PAID_SESSIONS
+   v21.PAID_SESSIONS.add(sid)
+   try:
+    # Capture v21 response without sending it to the socket.
+    captured={}
+    oldjson=self._json
+    def cap(obj,status=200):captured.update({'obj':obj,'status':status});return None
+    self._json=cap
+    v21.H.do_POST(self)
+    rep=captured.get('obj') or {}
+   finally:
+    self._json=oldjson
+    if not was and not paid:v21.PAID_SESSIONS.discard(sid)
+   if paid:return self._json(rep,captured.get('status',200))
+   dims=rep.get('dimensions',[]) if isinstance(rep,dict) else []
+   top=max(dims,key=lambda d:d.get('score',0),default={})
+   if lang=='en':top_insight=f"One signal stood out: {top.get('name','a conversation skill')}. Unlock the report to see the evidence, turning point, full scores and what to change next."
+   else:top_insight=f"אות אחד בלט בשיחה: {top.get('name','אחד מממדי השיחה')}. פתח את הדוח כדי לראות את הראיות, נקודת המפנה, הציונים המלאים ומה כדאי לשנות בשיחה הבאה."
+   return self._json({'locked':True,'preview':{'top_insight':top_insight},'alpha_notice':rep.get('alpha_notice','') if isinstance(rep,dict) else '','price_usd':os.getenv('REPORT_PRICE_USD','4.90')})
   if p in ('/api/stripe/checkout','/api/checkout'):
    try:
     body=self._body();plan=(body.get('plan')or'deep').strip().lower();sid=(body.get('session_id')or'').strip()
