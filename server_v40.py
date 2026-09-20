@@ -104,10 +104,28 @@ Schema: {{"dimensions":[{{"name":"...","score":4.2,"evidence":"..."}}],"outcome"
     s['report']=rep;app.save(sid)
    if paid:return self._json(rep,200)
    dims=rep.get('dimensions',[]) if isinstance(rep,dict) else []
-   top=max(dims,key=lambda d:d.get('score',0),default={})
-   if lang=='en':top_insight=f"One signal stood out: {top.get('name','a conversation skill')}. Unlock the report to see the evidence, turning point, full scores and what to change next."
-   else:top_insight=f"אות אחד בלט בשיחה: {top.get('name','אחד מממדי השיחה')}. פתח את הדוח כדי לראות את הראיות, נקודת המפנה, הציונים המלאים ומה כדאי לשנות בשיחה הבאה."
-   return self._json({'locked':True,'preview':{'top_insight':top_insight},'alpha_notice':rep.get('alpha_notice','') if isinstance(rep,dict) else '','price_usd':os.getenv('REPORT_PRICE_USD','4.90')})
+   ranked=sorted(dims,key=lambda d:d.get('score',0),reverse=True)
+   top=ranked[0] if ranked else {}
+   low=ranked[-1] if ranked else {}
+   strengths=(rep.get('strengths') or []) if isinstance(rep,dict) else []
+   improvements=(rep.get('improvements') or []) if isinstance(rep,dict) else []
+   turning=(rep.get('turning_point') or '') if isinstance(rep,dict) else ''
+   better=(rep.get('better_phrase') or '') if isinstance(rep,dict) else ''
+   if lang=='en':
+    tips=[
+     strengths[0] if strengths else f"Strong signal: {top.get('name','conversation skill')} — {top.get('evidence','you created useful movement in the exchange')}.",
+     improvements[0] if improvements else f"Growth opportunity: {low.get('name','another conversation skill')} — the full report shows the exact moment and evidence.",
+     (f"Turning point: {turning}" if turning else (f"A stronger phrase for the key moment: {better}" if better else "The full report identifies the turning point and a stronger phrase you could use next time."))
+    ]
+    top_insight="Three signals from your conversation:"
+   else:
+    tips=[
+     strengths[0] if strengths else f"חוזקה בולטת: {top.get('name','מיומנות שיחה')} — {top.get('evidence','יצרת תנועה חיובית בשיחה')}.",
+     improvements[0] if improvements else f"נקודה לשיפור: {low.get('name','מיומנות נוספת')} — בדוח המלא מופיעים הרגע והראיה המדויקים.",
+     (f"נקודת מפנה: {turning}" if turning else (f"ניסוח שהיה יכול לחזק את הרגע המרכזי: {better}" if better else "בדוח המלא זוהתה נקודת המפנה וניסוח חלופי שהיה יכול לשנות את המשך השיחה."))
+    ]
+    top_insight="3 הצצות מהניתוח שלך:"
+   return self._json({'locked':True,'preview':{'top_insight':top_insight,'tips':tips},'alpha_notice':rep.get('alpha_notice','') if isinstance(rep,dict) else '','price_usd':os.getenv('REPORT_PRICE_USD','4.90')})
   if p in ('/api/stripe/checkout','/api/checkout'):
    try:
     body=self._body();plan=(body.get('plan')or'deep').strip().lower();sid=(body.get('session_id')or'').strip()
