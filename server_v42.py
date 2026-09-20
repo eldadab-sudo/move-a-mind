@@ -88,7 +88,11 @@ class H(v41.H):
             try: history=body.get('history') or []; usage=max(0,int(body.get('usage_count') or 0))
             except Exception: history=[];usage=0
             level=min(5,1+usage//3)
-            sc=adaptive_scenario(track,level,history)
+            # Start must be fast and reliable. Pick a non-recent bank scenario immediately;
+            # adaptive difficulty is applied in the conversation prompt, not by blocking
+            # the UI on an extra scenario-generation model call.
+            choices=[x for x in v21.BANK[track] if x.get('title') not in history[-8:]] or v21.BANK[track]
+            sc=v21.random.choice(choices)
             sid=str(v21.uuid.uuid4())
             s={'id':sid,'track':track,'turn':0,'messages':[],'status':'active','created_at':v21.datetime.datetime.utcnow().isoformat()+'Z','scenario':sc,'scenario_title':sc.get('title',''),'difficulty':level}
             app.STORE[sid]=s
@@ -112,7 +116,7 @@ class H(v41.H):
         s['turn'] += 1
         sc = v21.session_scenario(s)
         s['messages'].append({'role': 'user', 'content': text})
-        prompt = grounded_prompt(sc, s['track'], s['turn'], s['messages'])
+        prompt = grounded_prompt(sc, s['track'], s['turn'], s['messages']) + f"\nרמת קושי נוכחית: {s.get('difficulty',1)}/5. ככל שהרמה גבוהה יותר, העמק את המורכבות מתוך עובדות התרחיש באופן טבעי, בלי להמציא נושא חדש."
         ans = app.ai(prompt, s['messages'])
         if not ans:
             ans = 'אני רוצה להבין את הנקודה הזו טוב יותר. תוכל/י לפרט?'
@@ -140,5 +144,5 @@ class H(v41.H):
 
 if __name__ == '__main__':
     os.chdir(app.ROOT)
-    print('Move A Mind v4.41.1 - adaptive scenarios + rich preview')
+    print('Move A Mind v4.42 - fast scenario start + adaptive difficulty')
     ThreadingHTTPServer(('0.0.0.0', app.PORT), H).serve_forever()
