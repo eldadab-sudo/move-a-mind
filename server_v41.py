@@ -38,6 +38,8 @@ html=html.replace('</head>',r'''<style id="mamV426fix">
 @media(max-width:600px){.mamPayGrid{display:grid!important;grid-template-columns:1fr!important;overflow:visible!important}.mamPlanCard{width:100%!important;min-height:0!important;flex:none!important}.mamBenefits{display:block!important;visibility:visible!important}.mamBenefits li{display:list-item!important;visibility:visible!important}}
 </style></head>''',1)
 html=html.replace('<body>',r'''<body><div id="mamNeedConversation" dir="rtl"><div class="mamNeedBox"><div class="mamNeedIcon">💬</div><h2>עדיין אין מספיק מידע לניתוח מקצועי</h2><p id="mamNeedText">השיחה עדיין קצרה או שטחית מדי כדי להפיק ממנה דוח ותובנות אמינים. המשך את השיחה, התייחס למה שנאמר לך, נסה לקדם את הצד השני והעמק את התגובה.</p><button id="mamBackToConversation">חזרה לשיחה</button></div></div>''',1)
+html=html.replace("body:JSON.stringify({track:chosen,lang})","body:JSON.stringify({track:chosen,lang,usage_count:Number(localStorage.getItem('mam_usage_count')||0),history:JSON.parse(localStorage.getItem('mam_scenario_history')||'[]')})")
+html=html.replace("sid=j.session_id;localStorage.setItem('mam_sid',sid);","sid=j.session_id;localStorage.setItem('mam_sid',sid);try{let h=JSON.parse(localStorage.getItem('mam_scenario_history')||'[]');h.push(j.scenario_title||'');h=h.filter(Boolean).slice(-12);localStorage.setItem('mam_scenario_history',JSON.stringify(h));localStorage.setItem('mam_usage_count',String(Number(localStorage.getItem('mam_usage_count')||0)+1));}catch(e){}")
 html=html.replace('</body>',r'''<script id="mamProgress426">
 (function(){
  const tips=[
