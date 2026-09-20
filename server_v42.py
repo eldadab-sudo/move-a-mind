@@ -151,5 +151,5 @@ class H(v41.H):
 
 if __name__ == '__main__':
     os.chdir(app.ROOT)
-    print('Move A Mind v4.43 - instant subdomain start + single scenario')
+    print('Move A Mind v4.44 - launch candidate single-start guard')
     ThreadingHTTPServer(('0.0.0.0', app.PORT), H).serve_forever()
