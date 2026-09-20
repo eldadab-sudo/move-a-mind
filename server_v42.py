@@ -151,5 +151,5 @@ class H(v41.H):
 
 if __name__ == '__main__':
     os.chdir(app.ROOT)
-    print('Move A Mind v4.44 - launch candidate single-start guard')
+    print('Move A Mind v4.45 - launch audit payment fix')
     ThreadingHTTPServer(('0.0.0.0', app.PORT), H).serve_forever()
