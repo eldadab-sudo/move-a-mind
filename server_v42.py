@@ -81,24 +81,31 @@ class H(v41.H):
     def do_POST(self):
         path=urlparse(self.path).path
         if path == '/api/start':
-            try: body=self._body()
-            except Exception: return self._json({'error':'bad request'},400)
+            # Subdomain starts are already implemented by the inherited v24 handler
+            # as a fully local/instant path. Preserve it; overriding it here caused
+            # slow AI starts and ignored the selected subdomain.
+            try:
+                length=int(self.headers.get('Content-Length','0') or 0)
+                raw=self.rfile.read(length)
+                body=v21.json.loads(raw.decode('utf-8')) if raw else {}
+            except Exception:
+                return self._json({'error':'bad request'},400)
+            if body.get('subdomain'):
+                import io
+                self.rfile=io.BytesIO(raw)
+                self.headers.replace_header('Content-Length',str(len(raw)))
+                return super().do_POST()
             track=body.get('track');lang=body.get('lang','he')
             if track not in v21.BANK:return self._json({'error':'invalid track'},400)
             try: history=body.get('history') or []; usage=max(0,int(body.get('usage_count') or 0))
             except Exception: history=[];usage=0
             level=min(5,1+usage//3)
-            # Start must be fast and reliable. Pick a non-recent bank scenario immediately;
-            # adaptive difficulty is applied in the conversation prompt, not by blocking
-            # the UI on an extra scenario-generation model call.
             choices=[x for x in v21.BANK[track] if x.get('title') not in history[-8:]] or v21.BANK[track]
-            sc=v21.random.choice(choices)
-            sid=str(v21.uuid.uuid4())
-            s={'id':sid,'track':track,'turn':0,'messages':[],'status':'active','created_at':v21.datetime.datetime.utcnow().isoformat()+'Z','scenario':sc,'scenario_title':sc.get('title',''),'difficulty':level}
-            app.STORE[sid]=s
-            ans=app.ai(grounded_prompt(sc,track,0,[]),[]) or app.fallback(track,1)
-            ans=(ans or '').replace('[END]','').strip();s['messages'].append({'role':'assistant','content':ans});app.save(sid)
-            return self._json({'session_id':sid,'brief':v21.translated_brief(sc,lang),'scenario_title':v21.translated_title(sc,lang),'character':sc.get('character',''),'message':v21.maybe_translate_reply(ans,lang),'ended':False,'difficulty':level,'demo':not bool(app.API_KEY)})
+            sc=v21.random.choice(choices);sid=str(v21.uuid.uuid4())
+            opening=sc.get('opening') or app.fallback(track,1)
+            s={'id':sid,'track':track,'turn':0,'messages':[{'role':'assistant','content':opening}],'status':'active','created_at':v21.datetime.datetime.now(v21.datetime.timezone.utc).isoformat(),'scenario':sc,'scenario_title':sc.get('title',''),'difficulty':level}
+            app.STORE[sid]=s;app.save(sid)
+            return self._json({'session_id':sid,'brief':sc.get('brief',''),'scenario_title':sc.get('title',''),'character':sc.get('character',''),'message':opening,'ended':False,'difficulty':level,'demo':not bool(app.API_KEY)})
         if path != '/api/chat':
             return super().do_POST()
         try:
@@ -144,5 +151,5 @@ class H(v41.H):
 
 if __name__ == '__main__':
     os.chdir(app.ROOT)
-    print('Move A Mind v4.42 - fast scenario start + adaptive difficulty')
+    print('Move A Mind v4.43 - instant subdomain start + single scenario')
     ThreadingHTTPServer(('0.0.0.0', app.PORT), H).serve_forever()
