@@ -140,5 +140,5 @@ class H(v41.H):
 
 if __name__ == '__main__':
     os.chdir(app.ROOT)
-    print('Move A Mind v4.41 - adaptive scenarios + rich preview')
+    print('Move A Mind v4.41.1 - adaptive scenarios + rich preview')
     ThreadingHTTPServer(('0.0.0.0', app.PORT), H).serve_forever()
