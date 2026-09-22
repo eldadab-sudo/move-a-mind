@@ -178,11 +178,22 @@ window.addEventListener('DOMContentLoaded',()=>{
   how.before(feature);
   const video=feature.querySelector('video');
   if(video){
-    video.addEventListener('ended',()=>{
-      // Continue directly to the first interactive start screen; no extra CTA.
-      if(typeof go==='function') go('choose');
+    let advanced=false;
+    const advanceToStart=()=>{
+      if(advanced) return;
+      advanced=true;
+      video.pause();
+      feature.style.display='none';
+      // Return directly to the actual opening screen; never expose the video's final CTA frame.
+      if(typeof go==='function') go('landing');
       window.scrollTo(0,0);
+    };
+    video.addEventListener('timeupdate',()=>{
+      if(Number.isFinite(video.duration) && video.duration>0 && video.duration-video.currentTime<=1.0){
+        advanceToStart();
+      }
     });
+    video.addEventListener('ended',advanceToStart);
   }
 });
 </script>
