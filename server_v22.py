@@ -59,7 +59,7 @@ def verify_stripe(raw,sig):
 class H(v21.H):
     def do_GET(self):
         p=urlparse(self.path).path
-        if p=='/health':return self._json({'status':'ok','version':'4.46','scenarios':105,'persistent_sessions':True,'paywall_enabled':v21.PAYWALL_ENABLED,'payments_configured':bool(STRIPE_KEY and all(PRICES.values()))})
+        if p=='/health':return self._json({'status':'ok','version':'4.47','scenarios':105,'persistent_sessions':True,'paywall_enabled':v21.PAYWALL_ENABLED,'payments_configured':bool(STRIPE_KEY and all(PRICES.values()))})
         if p=='/api/stripe/status':
             st=price_status();return self._json({'provider':'stripe','configured':bool(STRIPE_KEY and all(PRICES.values())),'plans':st,'verified':all(x.get('verified') for x in st.values())})
         return super().do_GET()
@@ -73,6 +73,14 @@ class H(v21.H):
             obj=(j.get('data') or {}).get('object') or {};meta=obj.get('metadata') or {};sid=str(meta.get('session_id',''))
             if j.get('type')=='checkout.session.completed' and sid:mark_paid(sid,{'paid':True,'checkout_session_id':obj.get('id'),'plan':meta.get('plan')})
             return self._json({'ok':True})
+        if p=='/api/reflection':
+            try:body=self._body()
+            except:return self._json({'error':'bad request'},400)
+            sid=str(body.get('session_id',''));lang=str(body.get('lang','en'))
+            if sid not in app.STORE:return self._json({'error':'not found'},404)
+            q_he=['מה ניסית להשיג בשיחה?','מה לדעתך עבד הכי טוב?','איפה הרגשת התנגדות או קושי?','האם השגת את התוצאה שרצית?','באיזו מידה, מ-0 עד 100, הצלחת להזיז את השיחה קדימה?']
+            q_en=['What were you trying to achieve in the conversation?','What do you think worked best?','Where did you feel resistance or difficulty?','Did you achieve the outcome you wanted?','From 0 to 100, how much did you move the conversation forward?']
+            return self._json({'questions':q_he if lang=='he' else q_en})
         if p=='/api/checkout':
             try:body=self._body()
             except:return self._json({'error':'bad request'},400)
@@ -91,5 +99,5 @@ class H(v21.H):
         return super().do_POST()
 
 if __name__=='__main__':
-    os.chdir(app.ROOT);print('Move A Mind v4.46 - Stripe launch audit')
+    os.chdir(app.ROOT);print('Move A Mind v4.47 - reflection launch fix')
     ThreadingHTTPServer(('0.0.0.0',app.PORT),H).serve_forever()
