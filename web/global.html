@@ -188,10 +188,18 @@ window.addEventListener('DOMContentLoaded',()=>{
       if(typeof go==='function') go('landing');
       window.scrollTo(0,0);
     };
-    video.addEventListener('timeupdate',()=>{
-      if(Number.isFinite(video.duration) && video.duration>0 && video.duration-video.currentTime<=1.0){
+    const guardFinalFrames=()=>{
+      if(Number.isFinite(video.duration) && video.duration>0 && video.duration-video.currentTime<=3.0){
         advanceToStart();
       }
+    };
+    // timeupdate can be sparse on mobile browsers, so use both media events and a short timer.
+    video.addEventListener('timeupdate',guardFinalFrames);
+    video.addEventListener('playing',()=>{
+      const timer=setInterval(()=>{
+        if(advanced || video.paused || video.ended){clearInterval(timer);return;}
+        guardFinalFrames();
+      },100);
     });
     video.addEventListener('ended',advanceToStart);
   }
