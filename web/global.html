@@ -174,35 +174,33 @@ window.addEventListener('DOMContentLoaded',()=>{
   if(!how || document.querySelector('.videoFeature')) return;
   const feature=document.createElement('div');
   feature.className='videoFeature';
-  feature.innerHTML='<video controls playsinline preload="metadata" poster="/move-a-mind-video-poster.jpg" aria-label="Move A Mind"><source src="/move-a-mind-animation.mp4" type="video/mp4"></video>';
+  feature.innerHTML='<video controls playsinline preload="metadata" poster="/move-a-mind-video-poster.jpg" aria-label="Move A Mind"><source src="/move-a-mind-animation.mp4?v=20260922-2" type="video/mp4"></video>';
   how.before(feature);
   const video=feature.querySelector('video');
-  if(video){
-    let advanced=false;
-    const advanceToStart=()=>{
-      if(advanced) return;
-      advanced=true;
-      video.pause();
-      feature.style.display='none';
-      // Return directly to the actual opening screen; never expose the video's final CTA frame.
-      if(typeof go==='function') go('landing');
-      window.scrollTo(0,0);
-    };
-    const guardFinalFrames=()=>{
-      if(Number.isFinite(video.duration) && video.duration>0 && video.duration-video.currentTime<=3.0){
-        advanceToStart();
-      }
-    };
-    // timeupdate can be sparse on mobile browsers, so use both media events and a short timer.
-    video.addEventListener('timeupdate',guardFinalFrames);
-    video.addEventListener('playing',()=>{
-      const timer=setInterval(()=>{
-        if(advanced || video.paused || video.ended){clearInterval(timer);return;}
-        guardFinalFrames();
-      },100);
-    });
-    video.addEventListener('ended',advanceToStart);
-  }
+  if(!video) return;
+  let advanced=false,timer=null;
+  const advance=()=>{
+    if(advanced)return;
+    advanced=true;
+    if(timer)clearInterval(timer);
+    video.pause();
+    feature.remove();
+    if(typeof go==='function')go('landing');
+    window.scrollTo(0,0);
+  };
+  const check=()=>{
+    if(!Number.isFinite(video.duration)||video.duration<=0)return;
+    // The CTA is baked into the MP4. Never render the final 5 seconds.
+    if(video.currentTime>=Math.max(0,video.duration-5))advance();
+  };
+  video.addEventListener('loadedmetadata',check);
+  video.addEventListener('timeupdate',check);
+  video.addEventListener('playing',()=>{
+    if(timer)clearInterval(timer);
+    timer=setInterval(check,50);
+  });
+  video.addEventListener('pause',()=>{if(timer){clearInterval(timer);timer=null;}});
+  video.addEventListener('ended',advance);
 });
 </script>
 
