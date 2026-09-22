@@ -174,7 +174,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   if(!how || document.querySelector('.videoFeature')) return;
   const feature=document.createElement('div');
   feature.className='videoFeature';
-  feature.innerHTML='<video controls playsinline preload="metadata" poster="/move-a-mind-video-poster.jpg" aria-label="Move A Mind"><source src="/move-a-mind-animation-v2.mp4?v=20260922-3" type="video/mp4"></video>';
+  feature.innerHTML='<video controls playsinline preload="metadata" poster="/move-a-mind-video-poster.jpg" aria-label="Move A Mind"><source src="/move-a-mind-animation.mp4?v=20260922-3" type="video/mp4"></video>';
   how.before(feature);
   const video=feature.querySelector('video');
   if(!video) return;
