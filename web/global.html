@@ -14,14 +14,7 @@
 <link rel="icon" type="image/webp" href="/move-a-mind-logo.webp"><link rel="apple-touch-icon" href="/move-a-mind-logo.webp"></head>
 <body><div class="shell">
 <nav class="nav"><div class="brand"><img class="brandLogo" src="/move-a-mind-logo.webp" alt="Move A Mind logo"><span class="brandText">MOVE A MIND</span></div><div class="lang"><button id="enBtn" class="on">EN</button><button id="heBtn">עברית</button></div></nav>
-<section id="landing" class="screen active mamLanding"><div class="mamHero">
-<img class="mamMark" src="/move-a-mind-logo.webp" alt="Move A Mind">
-<h1>How well can you<br><em>move a mind?</em></h1>
-<p class="mamLead">Practice real conversations.<br>Get personalized feedback.<br>Build your influence skills.</p>
-<div class="mamBenefits"><div><b>◎</b><strong>PRACTICE</strong><span>Real-life scenarios</span></div><div><b>▥</b><strong>IMPROVE</strong><span>Personalized feedback</span></div><div><b>☆</b><strong>MAKE AN IMPACT</strong><span>In work, family and life</span></div></div>
-<button class="mamStart" id="heroStart">Get Started →</button><small>It only takes a few minutes</small>
-<div class="mamFoot">Move A Mind<br><span>How well can you move a mind?</span></div>
-</div><div id="how" style="display:none"></div><button id="learnBtn" style="display:none"></button></section>
+<section id="landing" class="screen active videoLanding"><div id="videoHome"></div><div id="how" style="display:none"></div><button id="heroStart" style="display:none"></button><button id="learnBtn" style="display:none"></button></section>
 <section id="choose" class="screen"><button class="back" data-go="landing">← <span data-t="back">Back</span></button><div class="pageHead"><small data-t="step1">Choose your arena</small><h2 data-t="chooseH">Where do you want to discover how much influence you really have?</h2><p data-t="chooseP">Pick the role you actually perform. You will be the salesperson, manager, commander, restaurant professional, parent, teacher — or the person trying to move an everyday decision.</p></div><div class="domains" id="domains"></div><button id="startBtn" style="display:none" aria-hidden="true"></button></section>
 <section id="chatScreen" class="screen"><button class="back" data-go="choose">← <span data-t="change">Change domain</span></button><div class="scenarioCard"><div class="scenarioLabel" id="scenarioLabel">YOUR SCENARIO</div><div class="scenarioTitle" id="scenarioTitle"></div><div class="scenarioText" id="brief"></div></div><div class="chatHead"><b id="charTitle"></b><span class="turnPill" id="turnPill"></span></div><div class="chat" id="chat"></div><div class="composer"><textarea id="msg" rows="2" data-ph="type"></textarea><button class="btn send" id="sendBtn" data-t="send">Send</button></div><button class="btn finish" id="finishBtn" data-t="finish">Finish conversation</button></section>
 <section id="reflect" class="screen"><div class="pageHead"><small data-t="before">Before the score</small><h2 data-t="reflectH">What do you think happened?</h2><p data-t="reflectP">A short self-read helps compare intention with what the conversation actually shows.</p></div><div class="card"><div id="questions" class="questions"></div><button class="btn primary" style="width:100%;margin-top:18px" id="scoreBtn" data-t="result">See my result</button></div></section>
@@ -172,43 +165,33 @@ window.addEventListener('load',()=>{
 });
 </script>
 <style>
-.videoFeature{margin:26px auto 46px;max-width:430px;padding:10px;background:rgba(255,255,255,.72);border:1px solid rgba(13,24,23,.1);border-radius:30px;box-shadow:var(--shadow)}
-.videoFeature video{display:block;width:100%;aspect-ratio:9/16;max-height:72vh;border-radius:22px;background:var(--night);object-fit:cover}
-@media(max-width:760px){.videoFeature{margin:18px auto 34px;padding:7px;border-radius:24px}.videoFeature video{border-radius:18px;max-height:68vh}}
+.videoLanding{margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);background:#031322;min-height:calc(100vh - 76px);padding:0}
+#videoHome{width:100%;min-height:calc(100vh - 76px);display:grid;place-items:start center;background:#031322}
+.videoFeature{position:relative;width:min(100vw,430px);margin:0 auto;background:#031322}
+.videoFeature video{display:block;width:100%;height:auto;max-height:calc(100vh - 76px);object-fit:contain;background:#031322}
+.finalCtaHotspot{display:none;position:absolute;left:10%;right:10%;bottom:12%;height:12%;border:0;background:transparent;cursor:pointer;z-index:5}
+.videoFeature.final-frame .finalCtaHotspot{display:block}
+@media(max-width:760px){.videoLanding{min-height:calc(100vh - 62px)}#videoHome{min-height:calc(100vh - 62px)}.videoFeature video{max-height:calc(100vh - 62px)}}
 </style>
 <script>
 window.addEventListener('DOMContentLoaded',()=>{
-  const how=document.querySelector('#how');
-  if(!how || document.querySelector('.videoFeature')) return;
+  const host=document.querySelector('#videoHome');
+  if(!host || document.querySelector('.videoFeature')) return;
   const feature=document.createElement('div');
   feature.className='videoFeature';
-  feature.innerHTML='<video controls playsinline preload="metadata" poster="/move-a-mind-video-poster.jpg" aria-label="Move A Mind"><source src="/move-a-mind-animation.mp4?v=20260922-3" type="video/mp4"></video>';
-  how.before(feature);
+  feature.innerHTML='<video controls playsinline preload="auto" poster="/move-a-mind-video-poster.jpg" aria-label="Move A Mind"><source src="/move-a-mind-animation.mp4?v=20260923-1" type="video/mp4"></video><button class="finalCtaHotspot" aria-label="מתחילים עכשיו"></button>';
+  host.appendChild(feature);
   const video=feature.querySelector('video');
-  if(!video) return;
-  let advanced=false,timer=null;
-  const advance=()=>{
-    if(advanced)return;
-    advanced=true;
-    if(timer)clearInterval(timer);
-    video.pause();
-    feature.remove();
-    if(typeof go==='function')go('landing');
-    window.scrollTo(0,0);
-  };
-  const check=()=>{
+  const hotspot=feature.querySelector('.finalCtaHotspot');
+  const enterApp=()=>{ if(typeof go==='function') go('choose'); window.scrollTo(0,0); };
+  hotspot.addEventListener('click',enterApp);
+  video.addEventListener('timeupdate',()=>{
     if(!Number.isFinite(video.duration)||video.duration<=0)return;
-    // The CTA is baked into the MP4. Never render the final 5 seconds.
-    if(video.currentTime>=Math.max(0,video.duration-5))advance();
-  };
-  video.addEventListener('loadedmetadata',check);
-  video.addEventListener('timeupdate',check);
-  video.addEventListener('playing',()=>{
-    if(timer)clearInterval(timer);
-    timer=setInterval(check,50);
+    const onFinal=video.currentTime>=Math.max(0,video.duration-5);
+    feature.classList.toggle('final-frame',onFinal);
+    if(onFinal && !video.paused) video.pause();
   });
-  video.addEventListener('pause',()=>{if(timer){clearInterval(timer);timer=null;}});
-  video.addEventListener('ended',advance);
+  video.addEventListener('ended',()=>feature.classList.add('final-frame'));
 });
 </script>
 
