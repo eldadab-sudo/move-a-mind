@@ -170,6 +170,10 @@ window.addEventListener('load',()=>{
 .videoFeature{position:relative;width:min(100vw,430px);margin:0 auto;background:#031322}
 .videoFeature video{display:block;width:100%;height:auto;max-height:calc(100vh - 76px);object-fit:contain;background:#031322}
 .finalCtaHotspot{display:none;position:absolute;left:10%;right:10%;bottom:12%;height:12%;border:0;background:transparent;cursor:pointer;z-index:5}
+.wordSeparators{display:none;position:absolute;left:0;right:0;bottom:5.7%;height:4.2%;pointer-events:none;z-index:4}
+.wordSeparators:before,.wordSeparators:after{content:"";position:absolute;top:0;bottom:0;width:1px;background:rgba(90,100,100,.38)}
+.wordSeparators:before{left:41.7%}.wordSeparators:after{left:61.2%}
+.videoFeature.feedback-frame .wordSeparators{display:block}
 .videoFeature.final-frame .finalCtaHotspot{display:block}
 @media(max-width:760px){.videoLanding{min-height:calc(100vh - 62px)}#videoHome{min-height:calc(100vh - 62px)}.videoFeature video{max-height:calc(100vh - 62px)}}
 </style>
@@ -179,7 +183,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   if(!host || document.querySelector('.videoFeature')) return;
   const feature=document.createElement('div');
   feature.className='videoFeature';
-  feature.innerHTML='<video controls playsinline preload="auto" poster="/move-a-mind-video-poster.jpg" aria-label="Move A Mind"><source src="/move-a-mind-animation.mp4?v=20260923-1" type="video/mp4"></video><button class="finalCtaHotspot" aria-label="מתחילים עכשיו"></button>';
+  feature.innerHTML='<video controls playsinline preload="auto" poster="/move-a-mind-video-poster.jpg" aria-label="Move A Mind"><source src="/move-a-mind-animation.mp4?v=20260923-2" type="video/mp4"></video><div class="wordSeparators" aria-hidden="true"></div><button class="finalCtaHotspot" aria-label="מתחילים עכשיו"></button>';
   host.appendChild(feature);
   const video=feature.querySelector('video');
   const hotspot=feature.querySelector('.finalCtaHotspot');
@@ -187,11 +191,14 @@ window.addEventListener('DOMContentLoaded',()=>{
   hotspot.addEventListener('click',enterApp);
   video.addEventListener('timeupdate',()=>{
     if(!Number.isFinite(video.duration)||video.duration<=0)return;
-    const onFinal=video.currentTime>=Math.max(0,video.duration-5);
-    feature.classList.toggle('final-frame',onFinal);
-    if(onFinal && !video.paused) video.pause();
+    const t=video.currentTime;
+    feature.classList.toggle('feedback-frame',t>=9 && t<13);
+    feature.classList.toggle('final-frame',t>=13);
   });
-  video.addEventListener('ended',()=>feature.classList.add('final-frame'));
+  video.addEventListener('ended',()=>{
+    feature.classList.remove('feedback-frame');
+    feature.classList.add('final-frame');
+  });
 });
 </script>
 
