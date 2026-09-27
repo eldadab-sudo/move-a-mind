@@ -165,17 +165,12 @@ window.addEventListener('load',()=>{
 });
 </script>
 <style>
-.videoLanding{margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);background:#031322;min-height:calc(100vh - 76px);padding:0}
-#videoHome{width:100%;min-height:calc(100vh - 76px);display:grid;place-items:start center;background:#031322}
+.videoLanding{margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);background:#031322;min-height:100vh;padding:0}
+#videoHome{width:100%;min-height:100vh;display:grid;place-items:start center;background:#031322}
 .videoFeature{position:relative;width:min(100vw,430px);margin:0 auto;background:#031322}
-.videoFeature video{display:block;width:100%;height:auto;max-height:calc(100vh - 76px);object-fit:contain;background:#031322}
+.videoFeature video{display:block;width:100%;height:auto;max-height:100vh;object-fit:contain;background:#031322}
 .finalCtaHotspot{display:none;position:absolute;left:10%;right:10%;bottom:12%;height:12%;border:0;background:transparent;cursor:pointer;z-index:5}
-.wordSeparators{display:none;position:absolute;left:0;right:0;bottom:5.7%;height:4.2%;pointer-events:none;z-index:4}
-.wordSeparators:before,.wordSeparators:after{content:"";position:absolute;top:0;bottom:0;width:1px;background:rgba(90,100,100,.38)}
-.wordSeparators:before{left:41.7%}.wordSeparators:after{left:61.2%}
-.videoFeature.feedback-frame .wordSeparators{display:block}
 .videoFeature.final-frame .finalCtaHotspot{display:block}
-@media(max-width:760px){.videoLanding{min-height:calc(100vh - 62px)}#videoHome{min-height:calc(100vh - 62px)}.videoFeature video{max-height:calc(100vh - 62px)}}
 </style>
 <script>
 window.addEventListener('DOMContentLoaded',()=>{
@@ -183,22 +178,16 @@ window.addEventListener('DOMContentLoaded',()=>{
   if(!host || document.querySelector('.videoFeature')) return;
   const feature=document.createElement('div');
   feature.className='videoFeature';
-  feature.innerHTML='<video controls playsinline preload="auto" poster="/move-a-mind-video-poster.jpg" aria-label="Move A Mind"><source src="/move-a-mind-animation-V8-1.mp4?v=20260927-1" type="video/mp4"></video><div class="wordSeparators" aria-hidden="true"></div><button class="finalCtaHotspot" aria-label="מתחילים עכשיו"></button>';
+  feature.innerHTML='<video autoplay muted playsinline preload="auto" aria-label="Move A Mind"><source src="/move-a-mind-animation-V8-1.mp4?v=20260927-2" type="video/mp4"></video><button type="button" class="finalCtaHotspot" aria-label="מתחילים עכשיו"></button>';
   host.appendChild(feature);
   const video=feature.querySelector('video');
   const hotspot=feature.querySelector('.finalCtaHotspot');
   const enterApp=()=>{ if(typeof go==='function') go('choose'); window.scrollTo(0,0); };
   hotspot.addEventListener('click',enterApp);
-  video.addEventListener('timeupdate',()=>{
-    if(!Number.isFinite(video.duration)||video.duration<=0)return;
-    const t=video.currentTime;
-    feature.classList.toggle('feedback-frame',t>=9 && t<13);
-    feature.classList.toggle('final-frame',t>=13);
-  });
-  video.addEventListener('ended',()=>{
-    feature.classList.remove('feedback-frame');
-    feature.classList.add('final-frame');
-  });
+  const sync=()=>{ if(Number.isFinite(video.duration)&&video.duration>0) feature.classList.toggle('final-frame',video.currentTime>=13); };
+  video.addEventListener('timeupdate',sync);
+  video.addEventListener('seeking',sync);
+  video.addEventListener('ended',()=>feature.classList.add('final-frame'));
 });
 </script>
 
