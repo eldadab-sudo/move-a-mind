@@ -181,7 +181,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   if(!host || document.querySelector('.videoFeature')) return;
   const feature=document.createElement('div');
   feature.className='videoFeature';
-  feature.innerHTML='<video autoplay muted playsinline preload="auto" aria-label="Move A Mind" src="/move-a-mind-animation-V8-1.mp4?v=20260927-3"></video><button type="button" class="finalCtaHotspot" aria-label="מתחילים עכשיו"></button>';
+  feature.innerHTML='<video autoplay muted playsinline preload="auto" aria-label="Move A Mind" poster="/move-a-mind-video-poster.jpg" src="/move-a-mind-animation-V8-1.mp4?v=20260927-4"></video><button type="button" class="finalCtaHotspot" aria-label="מתחילים עכשיו"></button>';
   host.appendChild(feature);
   const video=feature.querySelector('video');
   const hotspot=feature.querySelector('.finalCtaHotspot');
