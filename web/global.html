@@ -165,11 +165,11 @@ window.addEventListener('load',()=>{
 });
 </script>
 <style>
-body:has(#landing.active){background:#031322}
+body:has(#landing.active){background:#031322!important;overflow:hidden!important}
 body:has(#landing.active) .nav{display:none!important}
-#landing.videoLanding{position:fixed!important;inset:0!important;z-index:9999!important;margin:0!important;padding:0!important;width:100vw!important;height:100dvh!important;min-height:0!important;overflow:hidden!important;background:#031322!important}
+#landing.videoLanding{position:fixed!important;inset:0!important;z-index:99999!important;margin:0!important;padding:0!important;width:100vw!important;height:100dvh!important;min-height:0!important;overflow:hidden!important;background:#031322!important}
 #landing.videoLanding>div:not(#videoHome),#landing.videoLanding>#heroStart,#landing.videoLanding>#learnBtn{display:none!important}
-#videoHome{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;background:#031322!important}
+#videoHome{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;background:#031322!important;overflow:hidden!important}
 .videoFeature{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;margin:0!important;background:#031322!important}
 .videoFeature video{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;background:#031322!important}
 .finalCtaHotspot{display:none;position:absolute;left:10%;right:10%;bottom:12%;height:12%;border:0;background:transparent;cursor:pointer;z-index:5}
