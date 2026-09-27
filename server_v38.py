@@ -9,7 +9,7 @@ app = v37.app
 
 class H(v37.v36.H):
     STATIC = {
-        '/move-a-mind-animation.mp4': (app.WEB / 'move-a-mind-animation.mp4', 'video/mp4'),
+        '/move-a-mind-animation.mp4': (app.WEB / 'move-a-mind-animation.mp4', 'video/mp4'),\n        '/move-a-mind-animation-V8-1.mp4': (app.WEB / 'move-a-mind-animation-V8-1.mp4', 'video/mp4'),
         '/move-a-mind-video-poster.jpg': (app.WEB / 'move-a-mind-video-poster.jpg', 'image/jpeg'),
     }
 
