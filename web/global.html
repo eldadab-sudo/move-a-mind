@@ -181,16 +181,16 @@ window.addEventListener('DOMContentLoaded',()=>{
   if(!host || document.querySelector('.videoFeature')) return;
   const feature=document.createElement('div');
   feature.className='videoFeature';
-  feature.innerHTML='<video autoplay muted playsinline preload="auto" aria-label="Move A Mind"><source src="/move-a-mind-animation-V8-1.mp4?v=20260927-2" type="video/mp4"></video><button type="button" class="finalCtaHotspot" aria-label="מתחילים עכשיו"></button>';
+  feature.innerHTML='<video autoplay muted playsinline preload="auto" aria-label="Move A Mind" src="/move-a-mind-animation-V8-1.mp4?v=20260927-3"></video><button type="button" class="finalCtaHotspot" aria-label="מתחילים עכשיו"></button>';
   host.appendChild(feature);
   const video=feature.querySelector('video');
   const hotspot=feature.querySelector('.finalCtaHotspot');
-  const enterApp=()=>{ if(nav) nav.style.display=''; if(typeof go==='function') go('choose'); window.scrollTo(0,0); };
+  const enterApp=()=>{ if(typeof go==='function') go('choose'); window.scrollTo(0,0); };
   hotspot.addEventListener('click',enterApp);
   const sync=()=>{ if(Number.isFinite(video.duration)&&video.duration>0) feature.classList.toggle('final-frame',video.currentTime>=13); };
   video.addEventListener('timeupdate',sync);
   video.addEventListener('seeking',sync);
-  video.addEventListener('ended',()=>feature.classList.add('final-frame'));
+  video.addEventListener('ended',()=>feature.classList.add('final-frame'));\n  const startVideo=()=>{ const p=video.play(); if(p&&typeof p.catch==='function') p.catch(()=>{}); };\n  video.addEventListener('canplay',startVideo,{once:true});\n  startVideo();
 });
 </script>
 
