@@ -190,7 +190,10 @@ window.addEventListener('DOMContentLoaded',()=>{
   const sync=()=>{ if(Number.isFinite(video.duration)&&video.duration>0) feature.classList.toggle('final-frame',video.currentTime>=13); };
   video.addEventListener('timeupdate',sync);
   video.addEventListener('seeking',sync);
-  video.addEventListener('ended',()=>feature.classList.add('final-frame'));\n  const startVideo=()=>{ const p=video.play(); if(p&&typeof p.catch==='function') p.catch(()=>{}); };\n  video.addEventListener('canplay',startVideo,{once:true});\n  startVideo();
+  video.addEventListener('ended',()=>feature.classList.add('final-frame'));
+  const startVideo=()=>{ const p=video.play(); if(p&&typeof p.catch==='function') p.catch(()=>{}); };
+  video.addEventListener('canplay',startVideo,{once:true});
+  startVideo();
 });
 </script>
 
