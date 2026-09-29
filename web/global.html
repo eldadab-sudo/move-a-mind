@@ -172,7 +172,7 @@ body:has(#landing.active) .nav{display:none!important}
 #videoHome{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;background:#031322!important;overflow:hidden!important}
 .videoFeature{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;margin:0!important;background:#031322!important}
 .videoFeature video{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;background:#031322!important}
-.finalCtaHotspot{display:none;position:absolute;left:10%;right:10%;bottom:12%;height:12%;border:0;background:transparent;cursor:pointer;z-index:5}
+.finalCtaHotspot{display:none;position:absolute;left:10%;right:10%;bottom:22%;height:11%;border:0;background:transparent;cursor:pointer;z-index:20;touch-action:manipulation}
 .videoFeature.final-frame .finalCtaHotspot{display:block}
 </style>
 <script>
@@ -181,7 +181,9 @@ window.addEventListener('DOMContentLoaded',()=>{
   const video=document.querySelector('#launchVideo');
   const hotspot=feature&&feature.querySelector('.finalCtaHotspot');
   if(!feature || !video || !hotspot) return;
-  hotspot.addEventListener('click',()=>{ if(typeof go==='function') go('choose'); window.scrollTo(0,0); });
+  const enterApp=(e)=>{e.preventDefault();e.stopPropagation();if(typeof go==='function') go('choose');window.scrollTo(0,0);};
+  hotspot.addEventListener('pointerup',enterApp);
+  hotspot.addEventListener('click',enterApp);
   const sync=()=>{ if(Number.isFinite(video.duration)&&video.duration>0) feature.classList.toggle('final-frame',video.currentTime>=13); };
   video.addEventListener('timeupdate',sync);
   video.addEventListener('seeking',sync);
