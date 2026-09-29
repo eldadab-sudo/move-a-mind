@@ -1,0 +1,24 @@
+name: Fix V8 transition
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/fix-v8.yml']
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Fix transition and preserve original audio
+        run: |
+          ffmpeg -y -i web/move-a-mind-animation-V8-1.mp4 -vf "drawbox=x=323:y=460:w=270:h=150:color=#f7f4e8:t=fill:enable='between(t,4.65,4.99)'" -c:v libx264 -preset medium -crf 18 -c:a copy -movflags +faststart /tmp/v8.mp4
+          mv /tmp/v8.mp4 web/move-a-mind-animation-V8-1.mp4
+      - name: Commit fixed V8
+        run: |
+          git config user.name "Move A Mind Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add web/move-a-mind-animation-V8-1.mp4
+          git commit -m "Fix V8 screen-two transition while preserving audio"
+          git push
