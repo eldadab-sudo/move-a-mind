@@ -186,20 +186,24 @@ window.addEventListener('DOMContentLoaded',()=>{
   video.addEventListener('timeupdate',sync);
   video.addEventListener('seeking',sync);
   video.addEventListener('ended',()=>feature.classList.add('final-frame'));
-  // Start V8 immediately. Any real tap on the video enables its audio without restarting it.
+  // V8 contains an AAC audio track. Autoplay muted, then unlock audio synchronously
+  // on the first real user gesture anywhere on the launch screen.
   video.muted=true;
   video.volume=1;
   video.play().catch(()=>{});
+  let audioUnlocked=false;
   const enableSound=()=>{
-    video.muted=false;
+    if(audioUnlocked) return;
+    audioUnlocked=true;
+    video.removeAttribute('muted');
     video.defaultMuted=false;
+    video.muted=false;
     video.volume=1;
-    const p=video.play();
-    if(p&&typeof p.catch==='function') p.catch(()=>{});
+    if(video.paused) video.play().catch(()=>{audioUnlocked=false;});
   };
-  video.addEventListener('pointerup',enableSound,{once:true});
-  video.addEventListener('touchend',enableSound,{once:true,passive:true});
-  video.addEventListener('click',enableSound,{once:true});
+  feature.addEventListener('pointerdown',enableSound,{capture:true});
+  feature.addEventListener('touchstart',enableSound,{capture:true,passive:true});
+  feature.addEventListener('click',enableSound,{capture:true});
 });
 </script>
 
