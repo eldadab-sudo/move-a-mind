@@ -186,11 +186,18 @@ window.addEventListener('DOMContentLoaded',()=>{
   video.addEventListener('timeupdate',sync);
   video.addEventListener('seeking',sync);
   video.addEventListener('ended',()=>feature.classList.add('final-frame'));
-  video.muted=true;
-  video.play().catch(()=>{});
-  const enableSound=()=>{video.muted=false;video.volume=1;video.play().catch(()=>{});};
-  window.addEventListener('pointerdown',enableSound,{once:true,capture:true});
-  window.addEventListener('touchstart',enableSound,{once:true,capture:true});
+  video.muted=false;
+  video.volume=1;
+  const startWithSound=video.play();
+  if(startWithSound&&typeof startWithSound.catch==='function'){
+    startWithSound.catch(()=>{
+      video.muted=true;
+      video.play().catch(()=>{});
+      const enableSound=()=>{video.muted=false;video.volume=1;video.play().catch(()=>{});};
+      document.addEventListener('click',enableSound,{once:true,capture:true});
+      document.addEventListener('touchend',enableSound,{once:true,capture:true});
+    });
+  }
 });
 </script>
 
