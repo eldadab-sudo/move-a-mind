@@ -14,7 +14,7 @@
 <link rel="icon" type="image/webp" href="/move-a-mind-logo.webp"><link rel="apple-touch-icon" href="/move-a-mind-logo.webp"></head>
 <body><div class="shell">
 <nav class="nav"><div class="brand"><img class="brandLogo" src="/move-a-mind-logo.webp" alt="Move A Mind logo"><span class="brandText">MOVE A MIND</span></div><div class="lang"><button id="enBtn" class="on">EN</button><button id="heBtn">עברית</button></div></nav>
-<section id="landing" class="screen active videoLanding"><div id="videoHome"><div class="videoFeature"><video id="launchVideo" autoplay muted playsinline preload="auto" aria-label="Move A Mind" poster="/move-a-mind-video-poster.jpg" src="/move-a-mind-animation-V8-1.mp4?v=20260929-3"></video><button type="button" class="finalCtaHotspot" aria-label="מתחילים עכשיו"></button></div></div><div id="how" style="display:none"></div><button id="heroStart" style="display:none"></button><button id="learnBtn" style="display:none"></button></section>
+<section id="landing" class="screen active videoLanding"><div id="videoHome"><div class="videoFeature"><video id="launchVideo" autoplay muted playsinline preload="auto" aria-label="Move A Mind" src="/move-a-mind-animation-V8-1.mp4?v=20260929-5"></video><button type="button" class="finalCtaHotspot" aria-label="מתחילים עכשיו"></button></div></div><div id="how" style="display:none"></div><button id="heroStart" style="display:none"></button><button id="learnBtn" style="display:none"></button></section>
 <section id="choose" class="screen"><button class="back" data-go="landing">← <span data-t="back">Back</span></button><div class="pageHead"><small data-t="step1">Choose your arena</small><h2 data-t="chooseH">Where do you want to discover how much influence you really have?</h2><p data-t="chooseP">Pick the role you actually perform. You will be the salesperson, manager, commander, restaurant professional, parent, teacher — or the person trying to move an everyday decision.</p></div><div class="domains" id="domains"></div><button id="startBtn" style="display:none" aria-hidden="true"></button></section>
 <section id="chatScreen" class="screen"><button class="back" data-go="choose">← <span data-t="change">Change domain</span></button><div class="scenarioCard"><div class="scenarioLabel" id="scenarioLabel">YOUR SCENARIO</div><div class="scenarioTitle" id="scenarioTitle"></div><div class="scenarioText" id="brief"></div></div><div class="chatHead"><b id="charTitle"></b><span class="turnPill" id="turnPill"></span></div><div class="chat" id="chat"></div><div class="composer"><textarea id="msg" rows="2" data-ph="type"></textarea><button class="btn send" id="sendBtn" data-t="send">Send</button></div><button class="btn finish" id="finishBtn" data-t="finish">Finish conversation</button></section>
 <section id="reflect" class="screen"><div class="pageHead"><small data-t="before">Before the score</small><h2 data-t="reflectH">What do you think happened?</h2><p data-t="reflectP">A short self-read helps compare intention with what the conversation actually shows.</p></div><div class="card"><div id="questions" class="questions"></div><button class="btn primary" style="width:100%;margin-top:18px" id="scoreBtn" data-t="result">See my result</button></div></section>
@@ -188,6 +188,9 @@ window.addEventListener('DOMContentLoaded',()=>{
   video.addEventListener('ended',()=>feature.classList.add('final-frame'));
   video.muted=true;
   video.play().catch(()=>{});
+  const enableSound=()=>{video.muted=false;video.volume=1;video.play().catch(()=>{});};
+  window.addEventListener('pointerdown',enableSound,{once:true,capture:true});
+  window.addEventListener('touchstart',enableSound,{once:true,capture:true});
 });
 </script>
 
