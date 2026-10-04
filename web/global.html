@@ -192,18 +192,29 @@ window.addEventListener('DOMContentLoaded',()=>{
   video.addEventListener('ended',()=>feature.classList.add('final-frame'));
   // V8 contains an AAC audio track. Autoplay muted, then unlock audio synchronously
   // on the first real user gesture anywhere on the launch screen.
-  video.muted=true;
+  // Try audible autoplay first. If the browser blocks it, continue muted and
+  // resume with sound at the exact same frame on the first user gesture.
+  video.removeAttribute('muted');
+  video.defaultMuted=false;
+  video.muted=false;
   video.volume=1;
-  video.play().catch(()=>{});
+  video.play().catch(()=>{
+    video.muted=true;
+    video.play().catch(()=>{});
+  });
   let audioUnlocked=false;
   const enableSound=()=>{
-    if(audioUnlocked) return;
-    audioUnlocked=true;
+    if(audioUnlocked && !video.muted) return;
+    const t=video.currentTime;
+    video.pause();
     video.removeAttribute('muted');
     video.defaultMuted=false;
     video.muted=false;
     video.volume=1;
-    if(video.paused) video.play().catch(()=>{audioUnlocked=false;});
+    try{ video.currentTime=t; }catch(_){}
+    const p=video.play();
+    if(p&&p.catch) p.catch(()=>{audioUnlocked=false;});
+    audioUnlocked=true;
   };
   feature.addEventListener('pointerdown',enableSound,{capture:true});
   feature.addEventListener('touchstart',enableSound,{capture:true,passive:true});
