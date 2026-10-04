@@ -216,9 +216,15 @@ window.addEventListener('DOMContentLoaded',()=>{
     if(p&&p.catch) p.catch(()=>{audioUnlocked=false;});
     audioUnlocked=true;
   };
-  feature.addEventListener('pointerdown',enableSound,{capture:true});
-  feature.addEventListener('touchstart',enableSound,{capture:true,passive:true});
-  feature.addEventListener('click',enableSound,{capture:true});
+  // Samsung/Chromium requires play() itself to happen synchronously inside
+  // a trusted gesture. Listen at document level so the video cannot swallow it.
+  const unlockFromGesture=(e)=>{
+    if(!document.querySelector('#landing.active')) return;
+    enableSound();
+  };
+  document.addEventListener('pointerdown',unlockFromGesture,{capture:true,once:true});
+  document.addEventListener('touchend',unlockFromGesture,{capture:true,once:true});
+  document.addEventListener('click',unlockFromGesture,{capture:true,once:true});
 });
 </script>
 
