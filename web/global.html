@@ -14,7 +14,8 @@
 <link rel="icon" type="image/webp" href="/move-a-mind-logo.webp"><link rel="apple-touch-icon" href="/move-a-mind-logo.webp"></head>
 <body><div class="shell">
 <nav class="nav"><div class="brand"><img class="brandLogo" src="/move-a-mind-logo.webp" alt="Move A Mind logo"><span class="brandText">MOVE A MIND</span></div><div class="lang"><button id="enBtn" class="on">EN</button><button id="heBtn">עברית</button></div></nav>
-<section id="landing" class="screen active videoLanding"><div id="videoHome"><div class="videoFeature"><video id="launchVideo" autoplay muted playsinline preload="auto" aria-label="Move A Mind" src="/move-a-mind-animation-V8-1.mp4?v=20260929-7"></video><button type="button" class="finalCtaHotspot" aria-label="מתחילים עכשיו"></button></div></div></section>
+<section id="landing" class="screen active videoLanding"><div id="videoHome"><div class="videoFeature"><video id="launchVideo" autoplay muted playsinline preload="auto" aria-label="Move A Mind" src="/move-a-mind-animation-V8-1.mp4?v=20260929-7"></video>
+  <button type="button" class="soundHint" aria-label="הפעלת סאונד" title="הפעלת סאונד">🔊</button><button type="button" class="finalCtaHotspot" aria-label="מתחילים עכשיו"></button></div></div></section>
 <section id="appHome" class="screen"><div class="hero"><div><div class="eyebrow"><span class="dot"></span><span data-t="eyebrow">Adaptive conversation practice</span></div><h1>How well can you <em>move a mind?</em></h1><p class="lead" data-t="lead">Influence is not about talking more. It is about reading the person in front of you, understanding resistance, adapting in real time — and moving the conversation without losing trust.</p><div class="ctaRow"><button class="btn primary" id="heroStart" data-t="start">Start</button><button class="btn ghost" id="learnBtn" data-t="how">How it works</button></div></div><div class="heroSide"><b>105+</b><span data-t="side">expert-designed scenarios across seven domains. Every response changes what happens next.</span></div></div><div class="valueGrid" id="how"><div class="value"><div class="num">01</div><h3 data-t="v1h">Practice what is hard</h3><p data-t="v1p">Real resistance, imperfect information and no scripted “right answer.”</p></div><div class="value"><div class="num">02</div><h3 data-t="v2h">See what changed the room</h3><p data-t="v2p">Feedback tracks listening, trust, objection handling, adaptability and movement.</p></div><div class="value"><div class="num">03</div><h3 data-t="v3h">Build transferable skill</h3><p data-t="v3p">Sales, leadership, parenting, education, service, command and everyday decisions.</p></div></div><div class="quote"><strong data-t="quote">The goal is not to win the conversation. It is to move it.</strong><span data-t="quote2">Sometimes that means agreement. Sometimes a better compromise. Sometimes identifying the interest behind the position — and opening a new possibility from there.</span></div></section>
 
 <section id="choose" class="screen"><button class="back" data-go="appHome">← <span data-t="back">Back</span></button><div class="pageHead"><small data-t="step1">Choose your arena</small><h2 data-t="chooseH">Where do you want to discover how much influence you really have?</h2><p data-t="chooseP">Pick the role you actually perform. You will be the salesperson, manager, commander, restaurant professional, parent, teacher — or the person trying to move an everyday decision.</p></div><div class="domains" id="domains"></div><button id="startBtn" style="display:none" aria-hidden="true"></button></section>
@@ -176,12 +177,15 @@ body:has(#landing.active) .nav{display:none!important}
 .videoFeature video{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;background:#031322!important}
 .finalCtaHotspot{display:none;position:absolute;left:10%;right:10%;bottom:22%;height:11%;border:0;background:transparent;cursor:pointer;z-index:20;touch-action:manipulation}
 .videoFeature.final-frame .finalCtaHotspot{display:block}
+.soundHint{position:absolute;top:max(18px,env(safe-area-inset-top));right:18px;z-index:30;width:46px;height:46px;border:1px solid rgba(255,255,255,.55);border-radius:50%;background:rgba(3,19,34,.62);color:#fff;font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);box-shadow:0 2px 10px rgba(0,0,0,.22)}
+.soundHint.sound-on{opacity:.65}
 </style>
 <script>
 window.addEventListener('DOMContentLoaded',()=>{
   const feature=document.querySelector('#videoHome .videoFeature');
   const video=document.querySelector('#launchVideo');
   const hotspot=feature&&feature.querySelector('.finalCtaHotspot');
+  const soundHint=feature&&feature.querySelector('.soundHint');
   if(!feature || !video || !hotspot) return;
   const enterApp=(e)=>{e.preventDefault();e.stopPropagation();if(typeof go==='function') go('appHome');window.scrollTo(0,0);};
   hotspot.addEventListener('pointerup',enterApp);
@@ -215,6 +219,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     const p=video.play();
     if(p&&p.catch) p.catch(()=>{audioUnlocked=false;});
     audioUnlocked=true;
+    if(soundHint){soundHint.textContent='🔊';soundHint.classList.add('sound-on');soundHint.setAttribute('aria-label','הסאונד פועל');}
   };
   // Samsung/Chromium requires play() itself to happen synchronously inside
   // a trusted gesture. Listen at document level so the video cannot swallow it.
@@ -225,6 +230,19 @@ window.addEventListener('DOMContentLoaded',()=>{
   document.addEventListener('pointerdown',unlockFromGesture,{capture:true,once:true});
   document.addEventListener('touchend',unlockFromGesture,{capture:true,once:true});
   document.addEventListener('click',unlockFromGesture,{capture:true,once:true});
+  if(soundHint){
+    soundHint.addEventListener('click',(e)=>{
+      e.preventDefault();e.stopPropagation();
+      if(video.muted){
+        enableSound();
+      }else{
+        video.muted=true;
+        soundHint.textContent='🔇';
+        soundHint.classList.remove('sound-on');
+        soundHint.setAttribute('aria-label','הפעלת סאונד');
+      }
+    });
+  }
 });
 </script>
 
