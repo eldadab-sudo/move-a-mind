@@ -177,7 +177,7 @@ body:has(#landing.active) .nav{display:none!important}
 .videoFeature video{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;background:#031322!important}
 .finalCtaHotspot{display:none;position:absolute;left:10%;right:10%;bottom:22%;height:11%;border:0;background:transparent;cursor:pointer;z-index:20;touch-action:manipulation}
 .videoFeature.final-frame .finalCtaHotspot{display:block}
-.soundHint{position:absolute;top:max(8px,env(safe-area-inset-top));right:8px;z-index:30;width:28px;height:28px;border:1px solid rgba(255,255,255,.45);border-radius:50%;background:rgba(3,19,34,.48);color:#fff;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);box-shadow:0 1px 5px rgba(0,0,0,.16)}
+.soundHint{position:absolute;top:max(18px,env(safe-area-inset-top));right:18px;z-index:30;width:28px;height:28px;border:1px solid rgba(255,255,255,.45);border-radius:50%;background:rgba(3,19,34,.48);color:#fff;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);box-shadow:0 1px 5px rgba(0,0,0,.16)}
 .soundHint.sound-on{opacity:.65}
 </style>
 <script>
@@ -194,54 +194,40 @@ window.addEventListener('DOMContentLoaded',()=>{
   video.addEventListener('timeupdate',sync);
   video.addEventListener('seeking',sync);
   video.addEventListener('ended',()=>feature.classList.add('final-frame'));
-  // V8 contains an AAC audio track. Autoplay muted, then unlock audio synchronously
-  // on the first real user gesture anywhere on the launch screen.
-  // Try audible autoplay first. If the browser blocks it, continue muted and
-  // resume with sound at the exact same frame on the first user gesture.
-  video.removeAttribute('muted');
-  video.defaultMuted=false;
-  video.muted=false;
+  // Start muted because mobile browsers block audible autoplay.
+  // The icon must reflect the real state: muted until the user explicitly taps it.
+  video.muted=true;
+  video.defaultMuted=true;
   video.volume=1;
-  video.play().catch(()=>{
-    video.muted=true;
-    video.play().catch(()=>{});
-  });
-  let audioUnlocked=false;
-  const enableSound=()=>{
-    if(audioUnlocked && !video.muted) return;
-    const t=video.currentTime;
-    video.pause();
-    video.removeAttribute('muted');
-    video.defaultMuted=false;
-    video.muted=false;
-    video.volume=1;
-    try{ video.currentTime=t; }catch(_){}
-    const p=video.play();
-    if(p&&p.catch) p.catch(()=>{audioUnlocked=false;});
-    audioUnlocked=true;
-    if(soundHint){soundHint.textContent='🔊';soundHint.classList.add('sound-on');soundHint.setAttribute('aria-label','הסאונד פועל');}
+  video.play().catch(()=>{});
+  const setSoundUi=()=>{
+    if(!soundHint) return;
+    const on=!video.muted && video.volume>0;
+    soundHint.textContent=on?'🔊':'🔇';
+    soundHint.classList.toggle('sound-on',on);
+    soundHint.setAttribute('aria-label',on?'השתקת סאונד':'הפעלת סאונד');
   };
-  // Samsung/Chromium requires play() itself to happen synchronously inside
-  // a trusted gesture. Listen at document level so the video cannot swallow it.
-  const unlockFromGesture=(e)=>{
-    if(!document.querySelector('#landing.active')) return;
-    enableSound();
-  };
-  document.addEventListener('pointerdown',unlockFromGesture,{capture:true,once:true});
-  document.addEventListener('touchend',unlockFromGesture,{capture:true,once:true});
-  document.addEventListener('click',unlockFromGesture,{capture:true,once:true});
+  setSoundUi();
   if(soundHint){
-    soundHint.addEventListener('click',(e)=>{
-      e.preventDefault();e.stopPropagation();
+    soundHint.addEventListener('pointerdown',(e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      const t=video.currentTime;
       if(video.muted){
-        enableSound();
+        video.pause();
+        video.removeAttribute('muted');
+        video.defaultMuted=false;
+        video.muted=false;
+        video.volume=1;
+        try{video.currentTime=t;}catch(_){}
+        const p=video.play();
+        if(p&&p.catch) p.catch(()=>{video.muted=true;setSoundUi();});
       }else{
         video.muted=true;
-        soundHint.textContent='🔇';
-        soundHint.classList.remove('sound-on');
-        soundHint.setAttribute('aria-label','הפעלת סאונד');
       }
+      setSoundUi();
     });
+    soundHint.addEventListener('click',(e)=>{e.preventDefault();e.stopPropagation();});
   }
 });
 </script>
