@@ -5,6 +5,7 @@ on:
     paths:
       - 'capacitor.config.ts'
       - 'web/global.html'
+      - 'web/offline.html'
       - 'package.json'
       - '.github/workflows/android-test.yml'
 jobs:
@@ -42,6 +43,16 @@ jobs:
               dest.mkdir(parents=True,exist_ok=True)
               im.resize((px,px),Image.Resampling.LANCZOS).save(dest/'ic_launcher.png')
               im.resize((px,px),Image.Resampling.LANCZOS).save(dest/'ic_launcher_round.png')
+          PY
+      - name: Configure Android permissions and app label
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('android/app/src/main/AndroidManifest.xml')
+          s=p.read_text()
+          if 'android.permission.INTERNET' not in s:
+              s=s.replace('<application', '<uses-permission android:name="android.permission.INTERNET" />\n    <application', 1)
+          p.write_text(s)
           PY
       - name: Build debug APK
         run: |
