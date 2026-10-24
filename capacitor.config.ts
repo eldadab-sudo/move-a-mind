@@ -6,7 +6,8 @@ const config: CapacitorConfig = {
   webDir: 'web',
   server: {
     url: 'https://move-a-mind-v08-production.up.railway.app',
-    cleartext: false
+    cleartext: false,
+    errorPath: 'offline.html'
   }
 };
 
