@@ -1,0 +1,36 @@
+name: Build iOS simulator app
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'capacitor.config.ts'
+      - 'web/global.html'
+      - '.github/workflows/ios-test.yml'
+jobs:
+  ios:
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Capacitor dependencies
+        run: npm install --no-audit --no-fund
+      - name: Prepare iOS project
+        run: |
+          npx cap add ios
+          npx cap sync ios
+      - name: Build unsigned iOS simulator app
+        run: |
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios-build CODE_SIGNING_ALLOWED=NO build
+      - name: Package simulator build
+        run: |
+          cd ios-build/Build/Products/Debug-iphonesimulator
+          zip -r "$GITHUB_WORKSPACE/move-a-mind-ios-simulator.zip" App.app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: move-a-mind-ios-simulator
+          path: move-a-mind-ios-simulator.zip
+          if-no-files-found: error
