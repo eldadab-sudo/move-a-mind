@@ -316,4 +316,32 @@ window.addEventListener('load',()=>{
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script>
+
+<style id="mam-mobile-navigation-fix">
+#landing.videoLanding:not(.active){display:none!important;visibility:hidden!important;pointer-events:none!important}
+#landing.videoLanding.active{display:block!important}
+#landing.videoLanding:not(.active) #videoHome{display:none!important}
+</style>
+<script>
+(function(){
+ function enter(){
+  const landing=document.getElementById('landing'),home=document.getElementById('appHome');
+  if(!home)return;
+  document.getElementById('launchVideo')?.pause();
+  document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));
+  if(landing){landing.classList.remove('active');landing.style.setProperty('display','none','important');landing.style.pointerEvents='none';}
+  home.classList.add('active');home.style.removeProperty('display');
+  try{sessionStorage.setItem('mam_intro_seen','1')}catch(_){}
+  window.scrollTo(0,0);
+ }
+ function init(){
+  const landing=document.getElementById('landing');
+  if(!landing)return;
+  document.getElementById('mamSkipIntro')?.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();enter()},true);
+  document.querySelector('.finalCtaHotspot')?.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();enter()},true);
+  try{if(sessionStorage.getItem('mam_intro_seen')==='1')enter()}catch(_){}
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
 </body></html>
