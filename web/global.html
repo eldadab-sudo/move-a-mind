@@ -292,4 +292,28 @@ window.addEventListener('load',()=>{
   }
 });
 </script>
+
+<style>
+/* Native/mobile startup safety: always provide a way past unsupported autoplay. */
+#mamSkipIntro{position:fixed;bottom:max(24px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:100050;border:1px solid #ffffff80;border-radius:14px;background:#09283c;color:#fff;font:700 17px Arial,sans-serif;padding:14px 25px;box-shadow:0 8px 24px #0006}
+#landing:not(.active) #mamSkipIntro{display:none}
+</style>
+<script>
+(function(){
+ function init(){
+  const landing=document.getElementById('landing'),video=document.getElementById('launchVideo');
+  if(!landing)return;
+  const btn=document.createElement('button');
+  btn.id='mamSkipIntro';btn.type='button';btn.textContent='המשך לאפליקציה / Continue';
+  btn.addEventListener('click',function(){if(typeof go==='function')go('appHome');else{landing.classList.remove('active');document.getElementById('appHome')?.classList.add('active')}});
+  landing.appendChild(btn);
+  if(video){
+   video.setAttribute('playsinline','');video.setAttribute('webkit-playsinline','');
+   video.addEventListener('error',()=>{btn.textContent='פתח את האפליקציה / Open app'});
+   video.addEventListener('stalled',()=>{btn.style.display='block'});
+  }
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
 </body></html>
