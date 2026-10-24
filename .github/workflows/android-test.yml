@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'capacitor.config.ts'
+      - 'web/global.html'
       - 'package.json'
       - '.github/workflows/android-test.yml'
 jobs:
@@ -28,6 +29,20 @@ jobs:
         run: |
           npx cap add android
           npx cap sync android
+      - name: Apply Move A Mind launcher icon
+        run: |
+          python -m pip install Pillow
+          curl -fLsS --retry 3 --max-time 30 'https://move-a-mind-v08-production.up.railway.app/move-a-mind-logo.webp' -o /tmp/mam-logo.webp
+          python - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          im=Image.open('/tmp/mam-logo.webp').convert('RGBA')
+          for folder,px in [('mipmap-mdpi',48),('mipmap-hdpi',72),('mipmap-xhdpi',96),('mipmap-xxhdpi',144),('mipmap-xxxhdpi',192)]:
+              dest=Path('android/app/src/main/res')/folder
+              dest.mkdir(parents=True,exist_ok=True)
+              im.resize((px,px),Image.Resampling.LANCZOS).save(dest/'ic_launcher.png')
+              im.resize((px,px),Image.Resampling.LANCZOS).save(dest/'ic_launcher_round.png')
+          PY
       - name: Build debug APK
         run: |
           cd android
